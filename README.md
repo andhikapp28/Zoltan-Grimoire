@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">Zoltan Grimoire</h1>
-<p align="center"><em>an unofficial cheat codex for <a href="[https://store.steampowered.com/app/1581800/Slow_living_with_Princess/])">Slow living with Princess</a></em></p>
+<p align="center"><em>an unofficial cheat codex for <a href="https://store.steampowered.com/app/1581800/Slow_living_with_Princess/">Slow living with Princess</a></em></p>
 
 <p align="center">
   <img alt="type" src="https://img.shields.io/badge/type-single--file%20HTML-8fb4c9">
