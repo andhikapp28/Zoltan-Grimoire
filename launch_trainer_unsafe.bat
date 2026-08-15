@@ -18,4 +18,4 @@ start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" ^
   --disable-web-security ^
   --no-first-run ^
   --disable-features=IsolateOrigins,site-per-process ^
-  "file:///E:/KODING/slowlife/trainer.html"
+  "YOUR TRAINER PATH"
