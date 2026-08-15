@@ -2,6 +2,7 @@
 # not meant to be published (it's an actual playthrough's save contents).
 data.json
 file1.rmmzsave
+item_id.md
 
 # OS cruft
 .DS_Store
