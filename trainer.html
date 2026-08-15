@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zoltan Grimoire</title>
+<style>
+  :root{
+    --ink:#12100c;
+    --panel:#1c2b22;
+    --panel-raised:#24352a;
+    --panel-line:#3a4a3c;
+    --parchment:#eae1cc;
+    --parchment-dim:#a79c82;
+    --amber:#d9a441;
+    --amber-dim:#8a6a2d;
+    --mithril:#8fb4c9;
+    --ruby:#c0524a;
+    --moss:#7fa869;
+    --font-display:Georgia,"Iowan Old Style","Palatino Linotype","Book Antiqua",serif;
+    --font-ui:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,"Liberation Mono",monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--parchment);
+    font-family:var(--font-ui);
+    font-size:15px;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  ::selection{background:var(--amber);color:var(--ink);}
+
+  a{color:var(--mithril);}
+
+  .page{
+    max-width:1240px;
+    margin:0 auto;
+    padding:28px 24px 80px;
+    display:flex;
+    flex-direction:column;
+    gap:28px;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap;
+    border-bottom:1px solid var(--panel-line);
+    padding-bottom:18px;
+  }
+  .masthead h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(28px,4vw,40px);
+    margin:0;
+    letter-spacing:0.01em;
+    text-wrap:balance;
+    color:var(--parchment);
+  }
+  .masthead h1 em{
+    font-style:normal;
+    color:var(--amber);
+  }
+  .masthead .tagline{
+    font-family:var(--font-display);
+    font-style:italic;
+    color:var(--parchment-dim);
+    font-size:15px;
+    margin-top:4px;
+  }
+  .masthead .meta{
+    text-align:right;
+    font-size:12.5px;
+    color:var(--parchment-dim);
+    font-family:var(--font-mono);
+    line-height:1.6;
+  }
+
+  .conn-status{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:99px;
+    padding:6px 8px 6px 12px;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--parchment-dim);
+  }
+  .conn-status .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--parchment-dim);
+    flex:0 0 auto;
+  }
+  .conn-status[data-state="connecting"] .dot{background:var(--amber);}
+  .conn-status[data-state="connected"] .dot{background:var(--moss);box-shadow:0 0 6px var(--moss);}
+  .conn-status[data-state="unavailable"] .dot{background:var(--ruby);}
+  .conn-status[data-state="connected"] .text{color:var(--moss);}
+  .conn-status[data-state="unavailable"] .text{color:var(--parchment-dim);}
+  .conn-status button{
+    background:none;
+    border:1px solid var(--panel-line);
+    color:var(--parchment-dim);
+    border-radius:50%;
+    width:20px;height:20px;
+    font-size:12px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .conn-status button:hover{color:var(--mithril);border-color:var(--mithril);}
+
+  details.setup{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:8px;
+    padding:2px 16px;
+  }
+  details.setup summary{
+    cursor:pointer;
+    padding:12px 0;
+    font-family:var(--font-ui);
+    font-weight:600;
+    font-size:13.5px;
+    color:var(--mithril);
+    letter-spacing:0.02em;
+    list-style:none;
+  }
+  details.setup summary::-webkit-details-marker{display:none;}
+  details.setup summary::before{content:"▸ ";display:inline-block;transition:transform .15s;}
+  details.setup[open] summary::before{transform:rotate(90deg);}
+  details.setup .body{
+    padding:0 0 16px;
+    color:var(--parchment-dim);
+    font-size:13.5px;
+  }
+  details.setup ol{margin:8px 0 0;padding-left:20px;}
+  details.setup li{margin-bottom:6px;}
+  details.setup code{
+    background:var(--ink);
+    border:1px solid var(--panel-line);
+    border-radius:4px;
+    padding:1px 6px;
+    font-family:var(--font-mono);
+    color:var(--amber);
+    font-size:12.5px;
+  }
+
+  /* ---------- layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:24px;
+    align-items:start;
+  }
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  section.panel{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  section.panel > .head{
+    padding:16px 18px 12px;
+    border-bottom:1px solid var(--panel-line);
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+  }
+  section.panel > .head h2{
+    font-family:var(--font-display);
+    font-size:19px;
+    margin:0;
+    color:var(--parchment);
+    letter-spacing:0.01em;
+  }
+  section.panel > .head .count{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--parchment-dim);
+    font-variant-numeric:tabular-nums;
+  }
+  section.panel > .head p{
+    margin:4px 0 0;
+    font-size:12.5px;
+    color:var(--parchment-dim);
+    width:100%;
+  }
+
+  /* ---------- quick cheats (left rail) ---------- */
+  .spellbook{
+    display:flex;
+    flex-direction:column;
+    max-height:none;
+  }
+  .spell-group-label{
+    padding:12px 18px 4px;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--amber-dim);
+  }
+  .spell{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 18px;
+    border-top:1px solid var(--panel-line);
+  }
+  .spell:first-of-type{border-top:none;}
+  .spell .label{
+    font-size:13.5px;
+    color:var(--parchment);
+    font-weight:600;
+  }
+  .spell .effect{
+    font-size:11.5px;
+    color:var(--parchment-dim);
+    margin-top:2px;
+  }
+  .cast-btn{
+    flex:0 0 auto;
+    background:var(--panel-raised);
+    color:var(--amber);
+    border:1px solid var(--amber-dim);
+    border-radius:6px;
+    padding:7px 12px;
+    font-family:var(--font-ui);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    cursor:pointer;
+    transition:background .12s,color .12s,transform .05s;
+    white-space:nowrap;
+  }
+  .cast-btn:hover{background:var(--amber);color:var(--ink);}
+  .cast-btn:active{transform:scale(0.96);}
+  .cast-btn:focus-visible{outline:2px solid var(--mithril);outline-offset:2px;}
+  .cast-btn.danger{color:var(--ruby);border-color:var(--ruby);}
+  .cast-btn.danger:hover{background:var(--ruby);color:var(--ink);}
+
+  /* ---------- item spawner ---------- */
+  .spawner-controls{
+    padding:14px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    border-bottom:1px solid var(--panel-line);
+  }
+  .search-row{
+    display:flex;
+    gap:8px;
+  }
+  input[type="text"], input[type="number"], select{
+    background:var(--ink);
+    border:1px solid var(--panel-line);
+    color:var(--parchment);
+    border-radius:6px;
+    padding:9px 11px;
+    font-family:var(--font-ui);
+    font-size:13.5px;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus{
+    outline:2px solid var(--mithril);
+    outline-offset:1px;
+  }
+  #search{flex:1;}
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .chip{
+    background:var(--panel-raised);
+    border:1px solid var(--panel-line);
+    color:var(--parchment-dim);
+    border-radius:99px;
+    padding:5px 11px;
+    font-size:11.5px;
+    font-family:var(--font-ui);
+    cursor:pointer;
+    user-select:none;
+  }
+  .chip.active{
+    background:var(--mithril);
+    border-color:var(--mithril);
+    color:var(--ink);
+    font-weight:700;
+  }
+
+  /* pixel-art icon swatch: size + sprite offset set inline (per-item), sheet + rendering fixed here */
+  .icon-swatch{
+    display:block;
+    flex:0 0 auto;
+    background-image:url('assets/IconSet.png');
+    background-repeat:no-repeat;
+    image-rendering:pixelated;
+    border-radius:4px;
+    background-color:var(--ink);
+    box-shadow:inset 0 0 0 1px var(--panel-line);
+  }
+
+  /* ---------- results view toggle ---------- */
+  .view-toggle{
+    display:flex;
+    flex:0 0 auto;
+    border:1px solid var(--panel-line);
+    border-radius:6px;
+    overflow:hidden;
+    align-self:stretch;
+  }
+  .view-btn{
+    background:var(--ink);
+    border:none;
+    color:var(--parchment-dim);
+    font-family:var(--font-ui);
+    font-size:12px;
+    font-weight:600;
+    padding:0 12px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .view-btn + .view-btn{border-left:1px solid var(--panel-line);}
+  .view-btn:hover{color:var(--parchment);}
+  .view-btn.active{background:var(--panel-raised);color:var(--amber);}
+  .view-btn:focus-visible{outline:2px solid var(--mithril);outline-offset:-2px;}
+
+  .results{
+    max-height:340px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+  }
+  .result-row{
+    display:grid;
+    grid-template-columns:auto 1fr auto auto;
+    align-items:center;
+    gap:10px;
+    padding:7px 18px;
+    border-bottom:1px solid var(--panel-line);
+  }
+  .result-row:hover{background:var(--panel-raised);}
+  .result-row .names{min-width:0;}
+  .result-row .en{
+    font-size:13.5px;
+    color:var(--parchment);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .result-row .jp{
+    font-size:11.5px;
+    color:var(--parchment-dim);
+  }
+  .result-row .tag{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--mithril);
+    border:1px solid var(--panel-line);
+    border-radius:4px;
+    padding:2px 6px;
+    white-space:nowrap;
+  }
+  .result-row .add-btn{
+    background:none;
+    border:1px solid var(--amber-dim);
+    color:var(--amber);
+    border-radius:6px;
+    width:28px;
+    height:28px;
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .result-row .add-btn:hover{background:var(--amber);color:var(--ink);}
+
+  /* ---------- results: card view ---------- */
+  .results.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(128px,1fr));
+    gap:10px;
+    padding:14px 16px;
+    align-content:start;
+  }
+  .item-card{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:6px;
+    background:var(--panel-raised);
+    border:1px solid var(--panel-line);
+    border-radius:8px;
+    padding:12px 8px 9px;
+  }
+  .item-card:hover{border-color:var(--amber-dim);}
+  .item-card .icon-swatch{margin-top:2px;}
+  .item-card .en{
+    font-size:12px;
+    color:var(--parchment);
+    line-height:1.3;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    min-height:2.6em;
+  }
+  .item-card .tag{
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    color:var(--mithril);
+    white-space:nowrap;
+  }
+  .item-card .add-btn{
+    position:absolute;
+    top:6px;
+    right:6px;
+    background:var(--ink);
+    border:1px solid var(--amber-dim);
+    color:var(--amber);
+    border-radius:5px;
+    width:22px;
+    height:22px;
+    font-size:14px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .item-card .add-btn:hover{background:var(--amber);color:var(--ink);}
+
+  .empty-note{
+    padding:24px 18px;
+    text-align:center;
+    color:var(--parchment-dim);
+    font-size:13px;
+    font-style:italic;
+    font-family:var(--font-display);
+  }
+  .results.cards .empty-note{grid-column:1/-1;}
+
+  /* ---------- satchel (cart) ---------- */
+  .satchel{
+    border-top:1px solid var(--panel-line);
+  }
+  .satchel .head{
+    padding:14px 18px 10px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+  }
+  .satchel .head h3{
+    font-family:var(--font-display);
+    font-size:15px;
+    margin:0;
+    color:var(--parchment);
+  }
+  .satchel-empty{
+    padding:10px 18px 18px;
+    color:var(--parchment-dim);
+    font-size:12.5px;
+    font-style:italic;
+    font-family:var(--font-display);
+  }
+  .satchel-list{
+    display:flex;
+    flex-direction:column;
+  }
+  .satchel-row{
+    display:grid;
+    grid-template-columns:auto 1fr auto auto;
+    align-items:center;
+    gap:10px;
+    padding:8px 18px;
+    border-top:1px solid var(--panel-line);
+  }
+  .satchel-row .en{font-size:13px;color:var(--parchment);}
+  .satchel-row .id{font-family:var(--font-mono);font-size:11px;color:var(--parchment-dim);}
+  .qty-input{
+    width:64px;
+    text-align:right;
+    font-family:var(--font-mono);
+    font-variant-numeric:tabular-nums;
+  }
+  .remove-btn{
+    background:none;
+    border:1px solid var(--panel-line);
+    color:var(--ruby);
+    border-radius:6px;
+    width:26px;
+    height:26px;
+    cursor:pointer;
+    font-size:14px;
+    line-height:1;
+  }
+  .remove-btn:hover{border-color:var(--ruby);}
+  .satchel-footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:14px 18px 18px;
+    flex-wrap:wrap;
+  }
+  select#targetList{min-width:170px;}
+  .cast-main{
+    background:var(--amber);
+    color:var(--ink);
+    border:none;
+    border-radius:7px;
+    padding:11px 20px;
+    font-family:var(--font-ui);
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.02em;
+    cursor:pointer;
+  }
+  .cast-main:hover{background:#e8b95a;}
+  .cast-main:disabled{background:var(--panel-raised);color:var(--parchment-dim);cursor:not-allowed;}
+  .clear-btn{
+    background:none;
+    border:1px solid var(--panel-line);
+    color:var(--parchment-dim);
+    border-radius:7px;
+    padding:11px 14px;
+    font-family:var(--font-ui);
+    font-size:12.5px;
+    cursor:pointer;
+  }
+  .clear-btn:hover{color:var(--ruby);border-color:var(--ruby);}
+
+  /* ---------- storage tools ---------- */
+  .storage-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+    gap:12px;
+    padding:16px 18px 20px;
+  }
+  .storage-card{
+    background:var(--panel-raised);
+    border:1px solid var(--panel-line);
+    border-radius:8px;
+    padding:12px 14px;
+  }
+  .storage-card .label{font-size:13px;font-weight:700;color:var(--parchment);}
+  .storage-card .effect{font-size:11.5px;color:var(--parchment-dim);margin:4px 0 10px;}
+
+  /* ---------- toast ---------- */
+  #toast{
+    position:fixed;
+    left:50%;
+    bottom:28px;
+    transform:translate(-50%,12px);
+    background:var(--moss);
+    color:var(--ink);
+    font-family:var(--font-ui);
+    font-weight:700;
+    font-size:13.5px;
+    padding:11px 20px;
+    border-radius:99px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s, transform .18s;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    z-index:50;
+  }
+  #toast.show{
+    opacity:1;
+    transform:translate(-50%,0);
+  }
+
+  footer{
+    text-align:center;
+    color:var(--parchment-dim);
+    font-size:11.5px;
+    font-family:var(--font-mono);
+    padding-top:8px;
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;}
+  }
+
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:var(--ink);}
+  ::-webkit-scrollbar-thumb{background:var(--panel-line);border-radius:6px;}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="masthead">
+    <div>
+      <h1>Zoltan <em>Grimoire</em></h1>
+      <div class="tagline">a cheat codex for Slow living with Princess</div>
+    </div>
+    <div class="conn-status" id="connStatus">
+      <span class="dot"></span>
+      <span class="text">checking…</span>
+      <button id="reconnectBtn" title="Retry connection">↻</button>
+    </div>
+  </div>
+
+  <details class="setup" id="setupDetails">
+    <summary>How this connects</summary>
+    <div class="body">
+      This page tries to reach the game directly over Chrome's remote-debugging port. When that
+      works, every button below runs immediately — no console needed. When the browser blocks it
+      (some do, as a security measure), buttons fall back to copying the script instead.
+      <ol>
+        <li>Launch the game, then open Chrome and go to <code>http://127.0.0.1:9222</code> once
+          — this confirms the port is reachable and warms up the target list</li>
+        <li>Come back here — the dot above turns green once connected</li>
+        <li>If it stays red: click the <code>index</code> target at that URL yourself (not the
+          "generated background page"), keep that tab open, then paste what gets copied here
+          into its Console tab</li>
+      </ol>
+    </div>
+  </details>
+
+  <div class="layout">
+
+    <section class="panel spellbook">
+      <div class="head"><h2>Quick Cheats</h2></div>
+      <div id="spellbook"></div>
+    </section>
+
+    <div style="display:flex;flex-direction:column;gap:24px;">
+
+      <section class="panel">
+        <div class="head">
+          <h2>Item Spawner</h2>
+          <span class="count" id="resultCount"></span>
+        </div>
+        <div class="spawner-controls">
+          <div class="search-row">
+            <input type="text" id="search" placeholder="Search an item by name… (e.g. potion, iron, wyvern)" autocomplete="off">
+            <div class="view-toggle" id="viewToggle" role="group" aria-label="Results view">
+              <button type="button" class="view-btn active" data-view="rows" aria-pressed="true">&#8801; Rows</button>
+              <button type="button" class="view-btn" data-view="cards" aria-pressed="false">&#8862; Cards</button>
+            </div>
+          </div>
+          <div class="chips" id="dbChips"></div>
+          <div class="chips" id="sectionChips"></div>
+        </div>
+        <div class="results" id="results"></div>
+
+        <div class="satchel">
+          <div class="head">
+            <h3>Satchel</h3>
+            <span class="count" id="satchelCount"></span>
+          </div>
+          <div id="satchelBody"></div>
+          <div class="satchel-footer">
+            <select id="targetList">
+              <option value="$gameSystem.inventory">→ Inventory</option>
+              <option value="$gameSystem.Handitem">→ Handitem (hotbar)</option>
+              <option value="$gameSystem.chest1">→ Chest 1</option>
+              <option value="$gameSystem.chest2">→ Chest 2</option>
+              <option value="$gameSystem.chest3">→ Chest 3</option>
+              <option value="$gameSystem.chest4">→ Chest 4</option>
+            </select>
+            <div style="display:flex;gap:8px;">
+              <button class="clear-btn" id="clearSatchel">Empty satchel</button>
+              <button class="cast-main" id="castSatchel" disabled>Cast script</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="head">
+          <h2>Storage Tools</h2>
+          <p>Merge duplicate stacks, compact empty slots, or sort all 4 chests by category.</p>
+        </div>
+        <div class="storage-grid" id="storageTools"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <footer>weapons craft at +1000 · armor/accessories craft at +10000 · Object.keys($gameSystem) is your friend</footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const ITEM_DATA = {"Items": [{"id": 1, "en": "(No recipe yet)", "jp": "まだレシピがない", "section": "General / Quest / Starter items", "desc": "Placeholder — unused", "icon": 657}, {"id": 2, "en": "Error Item", "jp": "エラーアイテム", "section": "General / Quest / Starter items", "desc": "\"It's strange that this item shows up\" — debug placeholder", "icon": 658}, {"id": 4, "en": "Torch (Unused)", "jp": "【未】たいまつ", "section": "General / Quest / Starter items", "desc": "Lights a candlestick; can also be delivered to the barracks", "icon": 16}, {"id": 5, "en": "Light Stick (Unused)", "jp": "【未】ライトスティック", "section": "General / Quest / Starter items", "desc": "Lights a candlestick; can also be delivered to the barracks", "icon": 16}, {"id": 7, "en": "Return Stone", "jp": "帰還石", "section": "General / Quest / Starter items", "desc": "A magic item that teleports you back to the herb shop anytime", "icon": 19}, {"id": 8, "en": "Lottery Ticket (Unused)", "jp": "【未】くじ引き券", "section": "General / Quest / Starter items", "desc": "One ticket lets you draw the lottery once", "icon": 20}, {"id": 9, "en": "Silver Tableware", "jp": "銀の食器", "section": "General / Quest / Starter items", "desc": "Elegant, high-class-feeling silverware", "icon": 7}, {"id": 10, "en": "Flyer", "jp": "チラシ", "section": "General / Quest / Starter items", "desc": "Detailed list of the herb shop's products; has Litt's advice corner", "icon": 4}, {"id": 11, "en": "Zoltan Sheet Music", "jp": "ゾルタンの楽譜", "section": "General / Quest / Starter items", "desc": "Sheet music with Zoltan folk songs written on it", "icon": 5}, {"id": 12, "en": "Slime Bowl", "jp": "スライム丼", "section": "General / Quest / Starter items", "desc": "A mysterious dish mixing chopped mushroom and onion into mucus", "icon": 157}, {"id": 13, "en": "Wyvern Race Token (Red)", "jp": "ワイヴァーンレースのコマ", "section": "General / Quest / Starter items", "desc": "The mayor's lost wyvern race token, carved with a red wyvern", "icon": 11}, {"id": 14, "en": "Wyvern Race Token (Black)", "jp": "ワイヴァーンレースのコマ", "section": "General / Quest / Starter items", "desc": "The mayor's lost wyvern race token, carved with a black wyvern", "icon": 12}, {"id": 16, "en": "Dungeon Map", "jp": "ダンジョンの地図", "section": "General / Quest / Starter items", "desc": "Fills in as you walk through the dungeon", "icon": 21}, {"id": 17, "en": "Passage Permit (Unused)", "jp": "【未】通行許可証", "section": "General / Quest / Starter items", "desc": "Issued to capable adventurers; show it to guards to pass certain areas", "icon": 24}, {"id": 18, "en": "Elf Bread", "jp": "エルフのパン", "section": "General / Quest / Starter items", "desc": "Bread spread with berry paste; keeps for a long time", "icon": 158}, {"id": 19, "en": "Anpan", "jp": "あんぱん", "section": "General / Quest / Starter items", "desc": "Sweet bean bun; goes great with milk", "icon": 159}, {"id": 20, "en": "Fries", "jp": "フライドポテト", "section": "General / Quest / Starter items", "desc": "Potatoes deep-fried in oil — greasy junk food", "icon": 151}, {"id": 21, "en": "Tavern House Salad", "jp": "酒場謹製サラダ", "section": "General / Quest / Starter items", "desc": "The tavern's signature salad, made with fresh Zoltan ingredients", "icon": 173}, {"id": 22, "en": "Dog Toy", "jp": "犬のおもちゃ", "section": "General / Quest / Starter items", "desc": "A disc-shaped toy to throw for dogs", "icon": 25}, {"id": 24, "en": "Bouquet of Passion", "jp": "情熱の花束", "section": "General / Quest / Starter items", "desc": "A bouquet featuring red and yellow flowers", "icon": 26}, {"id": 25, "en": "Cute Bouquet", "jp": "かわいい花束", "section": "General / Quest / Starter items", "desc": "A bouquet accented with pink flowers", "icon": 27}, {"id": 26, "en": "Pretty Bouquet", "jp": "きれいな花束", "section": "General / Quest / Starter items", "desc": "A very colorful bouquet", "icon": 28}, {"id": 27, "en": "Cool Bouquet", "jp": "クールな花束", "section": "General / Quest / Starter items", "desc": "A bouquet based on cool colors", "icon": 29}, {"id": 29, "en": "Fishing Rod", "jp": "釣り竿", "section": "General / Quest / Starter items", "desc": "A basic fishing rod anyone could easily make", "icon": 44}, {"id": 30, "en": "Good Fishing Rod", "jp": "いい釣り竿", "section": "General / Quest / Starter items", "desc": "A sturdy fishing rod made of Ironwood", "icon": 412}, {"id": 31, "en": "Amazing Fishing Rod", "jp": "すごい釣り竿", "section": "General / Quest / Starter items", "desc": "A flexible rod, brimming with vitality", "icon": 413}, {"id": 32, "en": "Legendary Fishing Rod (Unused)", "jp": "【未】伝説の釣り竿", "section": "General / Quest / Starter items", "desc": "The finest rod, approved even by the fishing master", "icon": 414}, {"id": 33, "en": "Kneaded Bait (Unused)", "jp": "【未】練り餌", "section": "General / Quest / Starter items", "desc": "Fishing bait made by kneading something", "icon": 46}, {"id": 34, "en": "Quality Kneaded Bait (Unused)", "jp": "【未】上質な練り餌", "section": "General / Quest / Starter items", "desc": "Bait fish seem to bite well on", "icon": 46}, {"id": 35, "en": "Premium Kneaded Bait (Unused)", "jp": "【未】高級練り餌", "section": "General / Quest / Starter items", "desc": "Bait made with a professional's full effort", "icon": 46}, {"id": 37, "en": "Runner-Dragon Feed", "jp": "走竜のエサ", "section": "General / Quest / Starter items", "desc": "Feed made from gathered leaves — give it a balanced diet", "icon": 30}, {"id": 38, "en": "Tasty Feed", "jp": "おいしいエサ", "section": "General / Quest / Starter items", "desc": "Better-tier runner-dragon feed", "icon": 30}, {"id": 39, "en": "Premium Feed", "jp": "極上のエサ", "section": "General / Quest / Starter items", "desc": "Best-tier runner-dragon feed", "icon": 30}, {"id": 40, "en": "Arena Potion", "jp": "闘技場ポーション", "section": "General / Quest / Starter items", "desc": "A dedicated potion usable only in the arena", "icon": 271}, {"id": 43, "en": "Ayu (Sweetfish)", "jp": "アユ", "section": "Fish (`--------魚--------`)", "desc": "A fish that's delicious salt-grilled", "icon": 48}, {"id": 44, "en": "Iwana (Char)", "jp": "イワナ", "section": "Fish (`--------魚--------`)", "desc": "A fish that's delicious salt-grilled", "icon": 49}, {"id": 45, "en": "Rainbow Trout", "jp": "ニジマス", "section": "Fish (`--------魚--------`)", "desc": "A river fish, also delicious meunière-style", "icon": 50}, {"id": 47, "en": "Catfish", "jp": "ナマズ", "section": "Fish (`--------魚--------`)", "desc": "A fish with long whiskers", "icon": 52}, {"id": 48, "en": "Crucian Carp", "jp": "フナ", "section": "Fish (`--------魚--------`)", "desc": "A fish commonly caught in wetlands", "icon": 53}, {"id": 49, "en": "Loach", "jp": "ドジョウ", "section": "Fish (`--------魚--------`)", "desc": "A slimy fish that lives in wetlands", "icon": 54}, {"id": 51, "en": "Salmon", "jp": "サケ", "section": "Fish (`--------魚--------`)", "desc": "A fish often caught in the sea or river", "icon": 56}, {"id": 52, "en": "Cod", "jp": "タラ", "section": "Fish (`--------魚--------`)", "desc": "A fish commonly caught in the sea", "icon": 57}, {"id": 53, "en": "Pufferfish", "jp": "フグ", "section": "Fish (`--------魚--------`)", "desc": "Be careful not to prepare it yourself if you're an amateur", "icon": 58}, {"id": 54, "en": "Squid", "jp": "イカ", "section": "Fish (`--------魚--------`)", "desc": "Fresh, firm-bodied squid", "icon": 59}, {"id": 55, "en": "Octopus", "jp": "タコ", "section": "Fish (`--------魚--------`)", "desc": "Looks gross, tastes great", "icon": 60}, {"id": 56, "en": "Wakame", "jp": "ワカメ", "section": "Fish (`--------魚--------`)", "desc": "Moderately thick seaweed", "icon": 62}, {"id": 57, "en": "Scallop", "jp": "ホタテ", "section": "Fish (`--------魚--------`)", "desc": "A large scallop with firm flesh", "icon": 61}, {"id": 59, "en": "Empty Can (Unused)", "jp": "【未】空の缶詰", "section": "Fish (`--------魚--------`)", "desc": "Probably a can someone threw into the sea", "icon": 64}, {"id": 60, "en": "Rubber Boots", "jp": "長靴", "section": "Fish (`--------魚--------`)", "desc": "Junk catch — a rubber boot that was floating in the sea (just one)", "icon": 65}, {"id": 62, "en": "Mackerel", "jp": "サバ", "section": "Fish (`--------魚--------`)", "desc": "A mackerel with just the right amount of fat", "icon": 68}, {"id": 63, "en": "Sardine", "jp": "イワシ", "section": "Fish (`--------魚--------`)", "desc": "A fish rich in calcium", "icon": 69}, {"id": 64, "en": "Sea Bream", "jp": "タイ", "section": "Fish (`--------魚--------`)", "desc": "A fish with a beautiful red color", "icon": 70}, {"id": 72, "en": "Tomato", "jp": "トマト", "section": "Crops (`--------作物--------`)", "desc": "A juicy, sweet tomato", "icon": 80}, {"id": 73, "en": "Carrot", "jp": "ニンジン", "section": "Crops (`--------作物--------`)", "desc": "A carrot with a smooth surface and deep color", "icon": 81}, {"id": 74, "en": "Lettuce", "jp": "レタス", "section": "Crops (`--------作物--------`)", "desc": "A juicy, springy lettuce", "icon": 82}, {"id": 75, "en": "Cucumber", "jp": "きゅうり", "section": "Crops (`--------作物--------`)", "desc": "A cucumber with sharp thorns and a glossy shine", "icon": 83}, {"id": 76, "en": "Daikon Radish", "jp": "ダイコン", "section": "Crops (`--------作物--------`)", "desc": "A daikon with a smooth surface and hefty weight", "icon": 84}, {"id": 77, "en": "Onion", "jp": "たまねぎ", "section": "Crops (`--------作物--------`)", "desc": "A plump, well-filled onion", "icon": 85}, {"id": 78, "en": "Pumpkin", "jp": "かぼちゃ", "section": "Crops (`--------作物--------`)", "desc": "A pumpkin with a hefty, solid weight", "icon": 86}, {"id": 79, "en": "Potato", "jp": "ジャガイモ", "section": "Crops (`--------作物--------`)", "desc": "A plump, rounded potato", "icon": 87}, {"id": 80, "en": "Sweet Potato", "jp": "サツマイモ", "section": "Crops (`--------作物--------`)", "desc": "A sweet potato with a vivid crimson color", "icon": 88}, {"id": 81, "en": "Corn", "jp": "とうもろこし", "section": "Crops (`--------作物--------`)", "desc": "Corn packed tightly with kernels", "icon": 89}, {"id": 82, "en": "White Bean", "jp": "白豆", "section": "Crops (`--------作物--------`)", "desc": "A white bean in a plump pod", "icon": 90}, {"id": 83, "en": "Wheat", "jp": "小麦", "section": "Crops (`--------作物--------`)", "desc": "Beautifully colored, glossy wheat", "icon": 91}, {"id": 85, "en": "Watermelon", "jp": "スイカ", "section": "Crops (`--------作物--------`)", "desc": "A watermelon that makes a nice sound when tapped", "icon": 96}, {"id": 86, "en": "Melon", "jp": "メロン", "section": "Crops (`--------作物--------`)", "desc": "A well-ripened melon", "icon": 97}, {"id": 87, "en": "Strawberry", "jp": "いちご", "section": "Crops (`--------作物--------`)", "desc": "Beautiful crimson strawberry — hard to grow, buy seedlings instead", "icon": 98}, {"id": 88, "en": "Cherry", "jp": "さくらんぼ", "section": "Crops (`--------作物--------`)", "desc": "A glossy, large-grained cherry", "icon": 99}, {"id": 89, "en": "Apple", "jp": "りんご", "section": "Crops (`--------作物--------`)", "desc": "An apple that basked in plenty of sunlight", "icon": 100}, {"id": 90, "en": "Mandarin Orange", "jp": "みかん", "section": "Crops (`--------作物--------`)", "desc": "A smooth, small mandarin orange", "icon": 101}, {"id": 91, "en": "Peach", "jp": "もも", "section": "Crops (`--------作物--------`)", "desc": "A peach with a sweet fragrance", "icon": 102}, {"id": 92, "en": "Grape", "jp": "ぶどう", "section": "Crops (`--------作物--------`)", "desc": "A grape with juicy, plump berries", "icon": 103}, {"id": 93, "en": "Banana", "jp": "バナナ", "section": "Crops (`--------作物--------`)", "desc": "A rounded banana", "icon": 104}, {"id": 94, "en": "Chestnut (Unused)", "jp": "【未】栗", "section": "Crops (`--------作物--------`)", "desc": "A chestnut packed full inside", "icon": 105}, {"id": 97, "en": "Tomato Seed", "jp": "トマトの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Tomato seeds", "icon": 112}, {"id": 98, "en": "Carrot Seed", "jp": "ニンジンの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Carrot seeds", "icon": 113}, {"id": 99, "en": "Lettuce Seed", "jp": "レタスの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Grows faster than other vegetables", "icon": 114}, {"id": 100, "en": "Cucumber Seed", "jp": "きゅうりの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Grows faster than other vegetables", "icon": 115}, {"id": 101, "en": "Daikon Seed", "jp": "ダイコンの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Daikon radish seeds", "icon": 116}, {"id": 102, "en": "Onion Seed", "jp": "たまねぎの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Onion seeds", "icon": 117}, {"id": 103, "en": "Pumpkin Seed", "jp": "かぼちゃの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Pumpkin seeds", "icon": 118}, {"id": 104, "en": "Seed Potato", "jp": "ジャガイモの種イモ", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "A seed potato for cultivation", "icon": 119}, {"id": 105, "en": "Sweet Potato Seedling", "jp": "サツマイモの種イモ", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "A seed sweet-potato tuber for cultivation", "icon": 120}, {"id": 106, "en": "Corn Seed", "jp": "とうもろこしの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Corn seeds", "icon": 121}, {"id": 107, "en": "White Bean Seed", "jp": "白豆の種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Grows faster than other vegetables", "icon": 122}, {"id": 108, "en": "Wheat Seed", "jp": "小麦の種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Takes slightly longer to grow than others", "icon": 123}, {"id": 110, "en": "Watermelon Seed", "jp": "スイカの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Watermelon seeds", "icon": 125}, {"id": 111, "en": "Melon Seed", "jp": "メロンの種", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "Melon seeds", "icon": 126}, {"id": 112, "en": "Strawberry Seedling", "jp": "いちごの苗", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "A strawberry seedling for cultivation", "icon": 1259}, {"id": 113, "en": "Cherry Sapling", "jp": "さくらんぼの苗木", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "A cherry sapling for cultivation", "icon": 1260}, {"id": 114, "en": "Apple Sapling", "jp": "りんごの苗木", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "An apple sapling for cultivation", "icon": 1261}, {"id": 115, "en": "Mandarin Orange Sapling", "jp": "みかんの苗木", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "A mandarin orange sapling for cultivation", "icon": 1262}, {"id": 116, "en": "Peach Sapling", "jp": "ももの苗木", "section": "Seeds / Seedlings (`--------種--------`)", "desc": "A peach sapling for cultivation", "icon": 1263}, {"id": 119, "en": "Beef", "jp": "牛肉", "section": "Meat & Eggs (`--------肉・卵--------`)", "desc": "Raised in a nearby village — restocked regularly", "icon": 106}, {"id": 120, "en": "Pork", "jp": "豚肉", "section": "Meat & Eggs (`--------肉・卵--------`)", "desc": "Raised in a nearby village — restocked regularly", "icon": 107}, {"id": 121, "en": "Chicken", "jp": "鶏肉", "section": "Meat & Eggs (`--------肉・卵--------`)", "desc": "Raised near Zoltan — restocked regularly", "icon": 108}, {"id": 122, "en": "Beast Meat", "jp": "獣肉", "section": "Meat & Eggs (`--------肉・卵--------`)", "desc": "Meat from beasts living around Zoltan", "icon": 109}, {"id": 123, "en": "Orc Meat (Unused)", "jp": "【未】オークの肉", "section": "Meat & Eggs (`--------肉・卵--------`)", "desc": "Orc meat. ...Can you even eat it?", "icon": 110}, {"id": 124, "en": "Dragon Meat", "jp": "ドラゴンの肉", "section": "Meat & Eggs (`--------肉・卵--------`)", "desc": "Said to be highly nutritious — low fat, high protein", "icon": 111}, {"id": 126, "en": "Egg", "jp": "卵", "section": "Meat & Eggs (`--------肉・卵--------`)", "desc": "Fresh eggs, popular at Oparala's oden shop — restocked regularly", "icon": 93}, {"id": 127, "en": "Milk", "jp": "牛乳", "section": "Meat & Eggs (`--------肉・卵--------`)", "desc": "Brought in from a nearby village — restocked regularly", "icon": 94}, {"id": 128, "en": "Cheese", "jp": "チーズ", "section": "Meat & Eggs (`--------肉・卵--------`)", "desc": "Produced in a nearby village — restocked regularly", "icon": 95}, {"id": 131, "en": "Salad", "jp": "サラダ", "section": "Cooking (`--------料理--------`)", "desc": "Fresh salad using plenty of home-grown vegetables", "icon": 128}, {"id": 132, "en": "Potato Salad", "jp": "ポテトサラダ", "section": "Cooking (`--------料理--------`)", "desc": "A fluffy potato salad", "icon": 129}, {"id": 133, "en": "Colorful Salad", "jp": "いろどりサラダ", "section": "Cooking (`--------料理--------`)", "desc": "A vividly colorful salad using many kinds of vegetables", "icon": 130}, {"id": 134, "en": "Seafood Salad", "jp": "海鮮サラダ", "section": "Cooking (`--------料理--------`)", "desc": "Packed with fresh seafood caught near Zoltan", "icon": 131}, {"id": 135, "en": "Marinated Onion", "jp": "たまねぎのマリネ", "section": "Cooking (`--------料理--------`)", "desc": "Fully enjoy the sweetness of seasonal onions", "icon": 132}, {"id": 136, "en": "Pickled Daikon & Octopus", "jp": "大根とタコの酢漬け", "section": "Cooking (`--------料理--------`)", "desc": "Boiled octopus and salted daikon, pickled in vinegar", "icon": 133}, {"id": 137, "en": "Caprese", "jp": "カプレーゼ", "section": "Cooking (`--------料理--------`)", "desc": "A refreshing salad combining tomato and cheese", "icon": 134}, {"id": 138, "en": "Bacon Salad", "jp": "ベーコンサラダ", "section": "Cooking (`--------料理--------`)", "desc": "Topped with diced bacon and grated cheese", "icon": 135}, {"id": 139, "en": "White Bread", "jp": "白パン", "section": "Cooking (`--------料理--------`)", "desc": "Handmade bread using plenty of homegrown wheat", "icon": 136}, {"id": 140, "en": "Sandwich", "jp": "サンドイッチ", "section": "Cooking (`--------料理--------`)", "desc": "A handmade sandwich with many flavors to enjoy", "icon": 137}, {"id": 141, "en": "Omelette", "jp": "オムレツ", "section": "Cooking (`--------料理--------`)", "desc": "An omelette made with plenty of eggs", "icon": 138}, {"id": 142, "en": "Bacon and Eggs", "jp": "ベーコンエッグ", "section": "Cooking (`--------料理--------`)", "desc": "Crispy bacon with soft-boiled eggs", "icon": 140}, {"id": 143, "en": "Bacon Gratin", "jp": "ベーコングラタン", "section": "Cooking (`--------料理--------`)", "desc": "A piping-hot gratin with crispy bacon", "icon": 141}, {"id": 144, "en": "Stew", "jp": "シチュー", "section": "Cooking (`--------料理--------`)", "desc": "A slow-simmered stew packed with vegetables", "icon": 142}, {"id": 145, "en": "Tomato Pizza", "jp": "トマトピザ", "section": "Cooking (`--------料理--------`)", "desc": "A tomato-sauce pizza piled with sliced tomato", "icon": 145}, {"id": 146, "en": "Mushroom Pizza", "jp": "きのこピザ", "section": "Cooking (`--------料理--------`)", "desc": "A tomato-sauce pizza loaded with mushrooms", "icon": 146}, {"id": 147, "en": "Seafood Pizza", "jp": "シーフードピザ", "section": "Cooking (`--------料理--------`)", "desc": "A tomato-sauce pizza made with fresh squid", "icon": 147}, {"id": 148, "en": "Hamburger", "jp": "ハンバーガー", "section": "Cooking (`--------料理--------`)", "desc": "Fresh meat and vegetables between the buns", "icon": 148}, {"id": 149, "en": "Cheeseburger", "jp": "チーズバーガー", "section": "Cooking (`--------料理--------`)", "desc": "Fresh meat, vegetables, and cheese between the buns", "icon": 149}, {"id": 150, "en": "Fish Burger", "jp": "フィッシュバーガー", "section": "Cooking (`--------料理--------`)", "desc": "Fresh fried fish and cheese between the buns", "icon": 150}, {"id": 151, "en": "Dragon Steak", "jp": "ドラゴンステーキ", "section": "Cooking (`--------料理--------`)", "desc": "A thick, high-protein dragon-meat steak grilled on an iron plate", "icon": 152}, {"id": 152, "en": "Nikujaga", "jp": "肉じゃが", "section": "Cooking (`--------料理--------`)", "desc": "Potatoes and meat simmered sweetly — an Eastern home-cooked dish", "icon": 153}, {"id": 153, "en": "Oden", "jp": "おでん", "section": "Cooking (`--------料理--------`)", "desc": "Oparala's special 3-piece oden set", "icon": 154}, {"id": 154, "en": "Takoyaki", "jp": "たこやき", "section": "Cooking (`--------料理--------`)", "desc": "Octopus baked round in wheat batter — a traditional Eastern dish", "icon": 155}, {"id": 155, "en": "Herb Cookie", "jp": "薬草クッキー", "section": "Cooking (`--------料理--------`)", "desc": "The herb shop's original cookie, made with herbs in the dough", "icon": 160}, {"id": 156, "en": "Nut Cookie", "jp": "ナッツクッキー", "section": "Cooking (`--------料理--------`)", "desc": "A cookie fragrant with crushed nuts", "icon": 160}, {"id": 157, "en": "Pumpkin Pie", "jp": "パンプキンパイ", "section": "Cooking (`--------料理--------`)", "desc": "A homemade pie using a whole pumpkin", "icon": 161}, {"id": 158, "en": "Apple Pie", "jp": "アップルパイ", "section": "Cooking (`--------料理--------`)", "desc": "Piled with sweetly stewed apples", "icon": 162}, {"id": 159, "en": "Sweet Potato Dessert", "jp": "スイートポテト", "section": "Cooking (`--------料理--------`)", "desc": "A homemade dessert made generously with sweet potatoes", "icon": 163}, {"id": 160, "en": "Dried Fruit", "jp": "ドライフルーツ", "section": "Cooking (`--------料理--------`)", "desc": "Portable food, sun-dried from various berries", "icon": 165}, {"id": 161, "en": "Fruit Yogurt", "jp": "フルーツヨーグルト", "section": "Cooking (`--------料理--------`)", "desc": "Yogurt with banana and grapes in it", "icon": 166}, {"id": 162, "en": "Fruit Tart", "jp": "フルーツタルト", "section": "Cooking (`--------料理--------`)", "desc": "Topped with colorful fruit", "icon": 167}, {"id": 163, "en": "Fruit Parfait", "jp": "フルーツパフェ", "section": "Cooking (`--------料理--------`)", "desc": "A sweet parfait loaded with fruit", "icon": 168}, {"id": 164, "en": "Strawberry Shortcake", "jp": "いちごのショートケーキ", "section": "Cooking (`--------料理--------`)", "desc": "Topped with sweet strawberries", "icon": 169}, {"id": 165, "en": "Pudding à la Mode", "jp": "プリンアラモード", "section": "Cooking (`--------料理--------`)", "desc": "Made with fresh eggs, goes great with whipped cream", "icon": 170}, {"id": 166, "en": "Dried Fruit Pancakes", "jp": "ドライフルーツのパンケーキ", "section": "Cooking (`--------料理--------`)", "desc": "Piled with berries — Yarandrala's favorite", "icon": 171}, {"id": 167, "en": "Tomato Soup", "jp": "トマトスープ", "section": "Cooking (`--------料理--------`)", "desc": "Made by slow-simmering tomatoes", "icon": 176}, {"id": 168, "en": "Vegetable Soup", "jp": "野菜スープ", "section": "Cooking (`--------料理--------`)", "desc": "A consommé-style soup with carrot and daikon", "icon": 177}, {"id": 169, "en": "Onion Soup", "jp": "オニオンスープ", "section": "Cooking (`--------料理--------`)", "desc": "A consommé-style soup, tastes of onion sweetness", "icon": 178}, {"id": 170, "en": "Pumpkin Soup", "jp": "かぼちゃスープ", "section": "Cooking (`--------料理--------`)", "desc": "Made by slow-simmering pumpkin", "icon": 179}, {"id": 171, "en": "Potato Soup", "jp": "ポテトスープ", "section": "Cooking (`--------料理--------`)", "desc": "Smooth-textured, made by carefully straining potatoes", "icon": 180}, {"id": 172, "en": "Corn Soup", "jp": "コーンスープ", "section": "Cooking (`--------料理--------`)", "desc": "A sweet soup, slow-simmered corn", "icon": 181}, {"id": 173, "en": "White Bean Soup", "jp": "白豆のスープ", "section": "Cooking (`--------料理--------`)", "desc": "A refreshing soup, carefully strained white beans", "icon": 182}, {"id": 174, "en": "Seafood Soup", "jp": "シーフードスープ", "section": "Cooking (`--------料理--------`)", "desc": "A mellow soup made with fresh seafood", "icon": 183}, {"id": 175, "en": "Mushroom Soup", "jp": "きのこスープ", "section": "Cooking (`--------料理--------`)", "desc": "A consommé-style soup, tastes of mushroom umami", "icon": 184}, {"id": 176, "en": "Chicken Soup", "jp": "チキンスープ", "section": "Cooking (`--------料理--------`)", "desc": "Based on chicken bones, packed with vegetables", "icon": 185}, {"id": 177, "en": "Mead", "jp": "蜂蜜酒（ミード）", "section": "Cooking (`--------料理--------`)", "desc": "A liquor made from honey — a couples' drink elsewhere", "icon": 186}, {"id": 178, "en": "Honey Milk", "jp": "はちみつミルク", "section": "Cooking (`--------料理--------`)", "desc": "Honey mixed with milk — Ruti's favorite", "icon": 187}, {"id": 179, "en": "Fruit Milk", "jp": "フルーツ牛乳", "section": "Cooking (`--------料理--------`)", "desc": "Fruity milk with a citrus fragrance", "icon": 188}, {"id": 180, "en": "Cider (Apple Wine)", "jp": "リンゴ酒", "section": "Cooking (`--------料理--------`)", "desc": "A sweet liquor steeped generously with apples", "icon": 189}, {"id": 181, "en": "Orange Juice", "jp": "オレンジジュース", "section": "Cooking (`--------料理--------`)", "desc": "Freshly squeezed 100% orange juice", "icon": 190}, {"id": 182, "en": "Wine", "jp": "ワイン", "section": "Cooking (`--------料理--------`)", "desc": "Rich aroma, fruity taste — a once-in-a-decade vintage", "icon": 191}, {"id": 183, "en": "Mixed Juice", "jp": "ミックスジュース", "section": "Cooking (`--------料理--------`)", "desc": "Freshly squeezed 100% mixed fruit juice", "icon": 174}, {"id": 185, "en": "Herb", "jp": "薬草", "section": "Herb-type (`--------草系--------`)", "desc": "Common herb, can be compounded into medicine", "icon": 192}, {"id": 186, "en": "Quality Herb", "jp": "上薬草", "section": "Herb-type (`--------草系--------`)", "desc": "High-quality herb with strong effects", "icon": 194}, {"id": 187, "en": "Bitter Herb", "jp": "苦薬草", "section": "Herb-type (`--------草系--------`)", "desc": "Faded, strongly bitter herb", "icon": 193}, {"id": 188, "en": "Flame Grass", "jp": "焔草", "section": "Herb-type (`--------草系--------`)", "desc": "Said to have a sweating effect", "icon": 196}, {"id": 189, "en": "Frostbite Grass", "jp": "凍てつき草", "section": "Herb-type (`--------草系--------`)", "desc": "Said to have a cooling effect", "icon": 197}, {"id": 190, "en": "Numbing Grass", "jp": "痺れ草", "section": "Herb-type (`--------草系--------`)", "desc": "Said to have a numbing effect — handle with care", "icon": 198}, {"id": 191, "en": "White Herb", "jp": "白薬草", "section": "Herb-type (`--------草系--------`)", "desc": "Somewhat rare — used for high-quality medicine", "icon": 199}, {"id": 192, "en": "Red Herb", "jp": "赤薬草", "section": "Herb-type (`--------草系--------`)", "desc": "Somewhat rare — used for high-quality medicine", "icon": 200}, {"id": 193, "en": "Blue Herb", "jp": "蒼薬草", "section": "Herb-type (`--------草系--------`)", "desc": "Somewhat rare — used for high-quality medicine", "icon": 201}, {"id": 194, "en": "Golden Grass", "jp": "黄金草", "section": "Herb-type (`--------草系--------`)", "desc": "Shines golden — used for high-quality medicine", "icon": 202}, {"id": 195, "en": "Nightglow Grass", "jp": "夜光草", "section": "Herb-type (`--------草系--------`)", "desc": "Glows only at night — used for high-quality medicine", "icon": 203}, {"id": 197, "en": "Grass", "jp": "草", "section": "Herb-type (`--------草系--------`)", "desc": "Ordinary grass", "icon": 205}, {"id": 198, "en": "Fluffy Grass", "jp": "ふわふわ草", "section": "Herb-type (`--------草系--------`)", "desc": "Grass growing around here — it's fluffy", "icon": 206}, {"id": 199, "en": "Spiky Grass", "jp": "トゲトゲ草", "section": "Herb-type (`--------草系--------`)", "desc": "Grass growing around here — it's spiky", "icon": 207}, {"id": 201, "en": "Healing Grass", "jp": "イヤシ草", "section": "Herb-type (`--------草系--------`)", "desc": "An herb with the power to heal wounds", "icon": 208}, {"id": 202, "en": "Fragrant Herb", "jp": "カオリ草", "section": "Herb-type (`--------草系--------`)", "desc": "Faint sweet fragrance", "icon": 209}, {"id": 203, "en": "Suspicious Grass", "jp": "アヤシ草", "section": "Herb-type (`--------草系--------`)", "desc": "Distinctive appearance", "icon": 210}, {"id": 204, "en": "Soothing Grass", "jp": "ナゴミ草", "section": "Herb-type (`--------草系--------`)", "desc": "Gently soft herb", "icon": 211}, {"id": 205, "en": "Hard-to-See Grass", "jp": "ミエナ草", "section": "Herb-type (`--------草系--------`)", "desc": "Leaves so transparent it's very hard to spot", "icon": 212}, {"id": 206, "en": "Henbane Grass", "jp": "ヒヨス草", "section": "Herb-type (`--------草系--------`)", "desc": "Hemostatic/antiseptic effects", "icon": 213}, {"id": 207, "en": "Tide Grass", "jp": "シオサイ草", "section": "Herb-type (`--------草系--------`)", "desc": "Soft, wavy-shaped", "icon": 214}, {"id": 208, "en": "Starfish Grass", "jp": "ヒトデ草", "section": "Herb-type (`--------草系--------`)", "desc": "Colored/shaped like a starfish", "icon": 215}, {"id": 209, "en": "Gray Starfish Grass", "jp": "灰色ヒトデ草", "section": "Herb-type (`--------草系--------`)", "desc": "Detoxifying effects", "icon": 216}, {"id": 210, "en": "Eri Grass", "jp": "エリ草", "section": "Herb-type (`--------草系--------`)", "desc": "Rare, outstanding effects — used for special medicine", "icon": 217}, {"id": 212, "en": "Green Aloe", "jp": "グリーンアロエ", "section": "Herb-type (`--------草系--------`)", "desc": "Said to be gentle on skin", "icon": 219}, {"id": 213, "en": "Red Aloe", "jp": "レッドアロエ", "section": "Herb-type (`--------草系--------`)", "desc": "Gentle on skin, rarer than Green Aloe", "icon": 220}, {"id": 215, "en": "Koku Leaf", "jp": "コクの葉", "section": "Herb-type (`--------草系--------`)", "desc": "Used in remedies — detoxifying, also treats white-eye disease", "icon": 222}, {"id": 216, "en": "Snow Vine", "jp": "雪蔓", "section": "Herb-type (`--------草系--------`)", "desc": "Grows in cold places — reduces goblin/filth fever", "icon": 223}, {"id": 218, "en": "Green Nut", "jp": "グリーンナッツ", "section": "Herb-type (`--------草系--------`)", "desc": "A nut that grows naturally in various places", "icon": 224}, {"id": 219, "en": "Red Egg (nut)", "jp": "レッドエッグ", "section": "Herb-type (`--------草系--------`)", "desc": "A nut shaped like a red egg", "icon": 225}, {"id": 220, "en": "White Berry", "jp": "ホワイトベリー", "section": "Herb-type (`--------草系--------`)", "desc": "Rare — catalyst for magic potions", "icon": 227}, {"id": 221, "en": "Red Berry", "jp": "レッドベリー", "section": "Herb-type (`--------草系--------`)", "desc": "Edible, also a potion catalyst", "icon": 228}, {"id": 222, "en": "Yellow Berry", "jp": "イエローベリー", "section": "Herb-type (`--------草系--------`)", "desc": "Edible, also a potion catalyst", "icon": 229}, {"id": 223, "en": "Sky Berry", "jp": "スカイベリー", "section": "Herb-type (`--------草系--------`)", "desc": "Small blue fruit — edible, also a potion catalyst", "icon": 230}, {"id": 224, "en": "Brown Berry", "jp": "ブラウンベリー", "section": "Herb-type (`--------草系--------`)", "desc": "Small brown fruit — edible, also a potion catalyst", "icon": 231}, {"id": 225, "en": "Gray Berry", "jp": "グレイベリー", "section": "Herb-type (`--------草系--------`)", "desc": "Resembles White Berry — catalyst for insect-bite medicine", "icon": 232}, {"id": 226, "en": "Rainbow Berry", "jp": "虹色ベリー", "section": "Herb-type (`--------草系--------`)", "desc": "Very rare — tastes different depending on which part you eat", "icon": 233}, {"id": 227, "en": "Fairy Strawberry (Unused)", "jp": "【未】妖精イチゴ", "section": "Herb-type (`--------草系--------`)", "desc": "Wild forest strawberry; elves paste it as preserved food", "icon": 234}, {"id": 228, "en": "Red Fruit", "jp": "赤い実", "section": "Herb-type (`--------草系--------`)", "desc": "Potion catalyst / dye material", "icon": 235}, {"id": 229, "en": "Green Fruit", "jp": "ミドリの実", "section": "Herb-type (`--------草系--------`)", "desc": "Largish green fruit — potion catalyst / dye", "icon": 236}, {"id": 230, "en": "Orange Fruit", "jp": "オレンジの実", "section": "Herb-type (`--------草系--------`)", "desc": "Larger yellow fruit — potion catalyst / dye", "icon": 237}, {"id": 231, "en": "Pink Fruit", "jp": "桃色の実", "section": "Herb-type (`--------草系--------`)", "desc": "Rare pink fruit — potion catalyst / dye", "icon": 238}, {"id": 232, "en": "Purple Fruit", "jp": "紫色の実", "section": "Herb-type (`--------草系--------`)", "desc": "Rare purple fruit — potion catalyst / dye", "icon": 239}, {"id": 234, "en": "Leaf", "jp": "葉っぱ", "section": "Herb-type (`--------草系--------`)", "desc": "Feed, fuel, or crafting material", "icon": 240}, {"id": 235, "en": "Yellow Leaf", "jp": "黄色い葉っぱ", "section": "Herb-type (`--------草系--------`)", "desc": "Feed, fuel, or crafting material", "icon": 241}, {"id": 236, "en": "Red Leaf", "jp": "赤い葉っぱ", "section": "Herb-type (`--------草系--------`)", "desc": "Feed, fuel, or crafting material", "icon": 242}, {"id": 237, "en": "Four-Leaf Clover", "jp": "四葉のクローバー", "section": "Herb-type (`--------草系--------`)", "desc": "A symbol of happiness in Zoltan — gift it to someone important", "icon": 243}, {"id": 238, "en": "White Flower", "jp": "白い花", "section": "Herb-type (`--------草系--------`)", "desc": "Snow-white flower", "icon": 245}, {"id": 239, "en": "Red Flower", "jp": "赤い花", "section": "Herb-type (`--------草系--------`)", "desc": "Passionately colored flower", "icon": 246}, {"id": 240, "en": "Pink Flower", "jp": "桃色の花", "section": "Herb-type (`--------草系--------`)", "desc": "A cute pink flower", "icon": 247}, {"id": 241, "en": "Yellow Flower", "jp": "黄色い花", "section": "Herb-type (`--------草系--------`)", "desc": "Attracts many insects", "icon": 248}, {"id": 242, "en": "Blue Flower", "jp": "青い花", "section": "Herb-type (`--------草系--------`)", "desc": "A refreshing scent", "icon": 249}, {"id": 243, "en": "Violet Flower", "jp": "スミレ色の花", "section": "Herb-type (`--------草系--------`)", "desc": "A beautiful purple color", "icon": 250}, {"id": 244, "en": "Lantern Flower (Unused)", "jp": "【未】灯花", "section": "Herb-type (`--------草系--------`)", "desc": "Lights your feet in a dark forest, like a lantern", "icon": 252}, {"id": 245, "en": "Sunlight Flower (Unused)", "jp": "【未】陽光花", "section": "Herb-type (`--------草系--------`)", "desc": "Lights up the area in a dark forest, like sunlight", "icon": 253}, {"id": 246, "en": "Bead Flower (Unused)", "jp": "【未】珠花", "section": "Herb-type (`--------草系--------`)", "desc": "A flower with jewel-like beads", "icon": 254}, {"id": 248, "en": "Mushroom", "jp": "キノコ", "section": "Herb-type (`--------草系--------`)", "desc": "Common in forests near Zoltan", "icon": 256}, {"id": 249, "en": "Spotted Mushroom", "jp": "マダラキノコ", "section": "Herb-type (`--------草系--------`)", "desc": "White-spotted, not poisonous", "icon": 257}, {"id": 250, "en": "Giant Mushroom", "jp": "オオキノコ", "section": "Herb-type (`--------草系--------`)", "desc": "Large, pointed cap", "icon": 258}, {"id": 251, "en": "Great Purple Mushroom", "jp": "オオムラサキキノコ", "section": "Herb-type (`--------草系--------`)", "desc": "Mutated variant of Giant Mushroom, purple cap", "icon": 259}, {"id": 252, "en": "Polyp Mushroom", "jp": "ポリプ茸", "section": "Herb-type (`--------草系--------`)", "desc": "Polyp-shaped cap — said effective against Korori Cold", "icon": 260}, {"id": 253, "en": "Blood Needle", "jp": "ブラッドニードル", "section": "Herb-type (`--------草系--------`)", "desc": "Blood-colored spiky mushroom — treats white-eye disease", "icon": 261}, {"id": 254, "en": "Rust-Eater Mushroom", "jp": "錆食い茸", "section": "Herb-type (`--------草系--------`)", "desc": "Has the effect of rusting iron", "icon": 263}, {"id": 255, "en": "Glowing Mushroom", "jp": "ヒカリ茸", "section": "Herb-type (`--------草系--------`)", "desc": "Special — glows in dark places", "icon": 264}, {"id": 256, "en": "Dragon God Mushroom", "jp": "龍神茸", "section": "Herb-type (`--------草系--------`)", "desc": "Said effective for nourishing the body", "icon": 265}, {"id": 257, "en": "Sakura Mushroom", "jp": "サクラ茸", "section": "Herb-type (`--------草系--------`)", "desc": "Very rare, beautiful cherry-blossom color", "icon": 266}, {"id": 258, "en": "Cactus", "jp": "サボテン", "section": "Herb-type (`--------草系--------`)", "desc": "Grows naturally in tropical regions — the thorns hurt", "icon": 267}, {"id": 259, "en": "Cactus Flower", "jp": "サボテンの花", "section": "Herb-type (`--------草系--------`)", "desc": "Very beautiful", "icon": 268}, {"id": 261, "en": "Potion", "jp": "ポーション", "section": "Potions / Medicines", "desc": "A common healing potion", "icon": 272}, {"id": 262, "en": "Cure Potion", "jp": "キュアポーション", "section": "Potions / Medicines", "desc": "A slightly higher-quality healing potion", "icon": 283}, {"id": 263, "en": "Extra Cure Potion", "jp": "エクストラキュアポーション", "section": "Potions / Medicines", "desc": "Highly effective, works on any injury", "icon": 286}, {"id": 264, "en": "Magic Potion (Unused)", "jp": "【未】マジックポーション", "section": "Potions / Medicines", "desc": "Unused — was a generic term summarizing potions", "icon": 284}, {"id": 265, "en": "Cure Poison Potion", "jp": "キュアポイズンポーション", "section": "Potions / Medicines", "desc": "Heals well and treats poison", "icon": 285}, {"id": 266, "en": "Red Potion", "jp": "レッドポーション", "section": "Potions / Medicines", "desc": "Herb shop original — boosts blood circulation", "icon": 273}, {"id": 267, "en": "Pink Potion", "jp": "ピンクポーション", "section": "Potions / Medicines", "desc": "Herb shop original — normalizes nervous system function", "icon": 279}, {"id": 268, "en": "Yellow Potion", "jp": "イエローポーション", "section": "Potions / Medicines", "desc": "Herb shop original — prevents rough skin/vitamin deficiency", "icon": 275}, {"id": 269, "en": "Green Potion", "jp": "グリーンポーション", "section": "Potions / Medicines", "desc": "Herb shop original — for everyday fatigue/lack of vegetables", "icon": 276}, {"id": 270, "en": "Blue Potion", "jp": "ブルーポーション", "section": "Potions / Medicines", "desc": "Herb shop original — relieves listlessness and stress", "icon": 277}, {"id": 271, "en": "White Potion", "jp": "ホワイトポーション", "section": "Potions / Medicines", "desc": "Herb shop original — nourishing/health-boosting", "icon": 281}, {"id": 272, "en": "Black Potion", "jp": "ブラックポーション", "section": "Potions / Medicines", "desc": "Herb shop original — effective against eye strain", "icon": 280}, {"id": 273, "en": "Fire Resistance Potion", "jp": "炎の耐性薬", "section": "Potions / Medicines", "desc": "Adventurer's magic potion — grants fire resistance", "icon": 289}, {"id": 274, "en": "Freeze Resistance Potion", "jp": "凍結の耐性薬", "section": "Potions / Medicines", "desc": "Adventurer's magic potion — grants freeze resistance", "icon": 292}, {"id": 275, "en": "Lightning Resistance Potion", "jp": "雷の耐性薬", "section": "Potions / Medicines", "desc": "Adventurer's magic potion — grants lightning resistance", "icon": 290}, {"id": 276, "en": "Holy Potion", "jp": "聖なるポーション", "section": "Potions / Medicines", "desc": "A magic potion used for compounding", "icon": 295}, {"id": 277, "en": "Dark Potion", "jp": "ダークポーション", "section": "Potions / Medicines", "desc": "A magic potion used for compounding", "icon": 294}, {"id": 278, "en": "Disinfectant", "jp": "消毒薬", "section": "Potions / Medicines", "desc": "Prevents germs entering a wound — apply directly", "icon": 309}, {"id": 279, "en": "Hemostatic Agent", "jp": "止血剤", "section": "Potions / Medicines", "desc": "Promotes wound healing — apply directly", "icon": 304}, {"id": 280, "en": "Antidote", "jp": "解毒薬", "section": "Potions / Medicines", "desc": "Removes poison from the body", "icon": 307}, {"id": 281, "en": "White-Eye Disease Medicine", "jp": "白眼病の薬", "section": "Potions / Medicines", "desc": "Effective against white-eye disease — needs continuous use", "icon": 313}, {"id": 282, "en": "Epidemic Cold Remedy", "jp": "流行り風邪特効薬", "section": "Potions / Medicines", "desc": "Boosts immunity and regulates body temperature", "icon": 305}, {"id": 283, "en": "Fever Reducer", "jp": "解熱剤", "section": "Potions / Medicines", "desc": "Lowers fever — effective for filth/goblin fever", "icon": 311}, {"id": 284, "en": "Heart-Healing Medicine", "jp": "心癒薬", "section": "Potions / Medicines", "desc": "Can treat mental/psychological damage", "icon": 318}, {"id": 285, "en": "Dream-Dispelling Medicine", "jp": "夢散薬", "section": "Potions / Medicines", "desc": "Prevents you from dreaming", "icon": 317}, {"id": 286, "en": "Assassin's Pill", "jp": "暗殺者の丸薬", "section": "Potions / Medicines", "desc": "Provides a day's food/water needs", "icon": 297}, {"id": 287, "en": "Inner-Fire Pill", "jp": "内火丸薬", "section": "Potions / Medicines", "desc": "Forcibly raises body temperature — emergency use only", "icon": 298}, {"id": 288, "en": "Sluggish Elixir", "jp": "のろま霊薬", "section": "Potions / Medicines", "desc": "Dulls perception — emergency use only", "icon": 319}, {"id": 289, "en": "Wild Elf Medicine", "jp": "ワイルドエルフの薬", "section": "Potions / Medicines", "desc": "Secret Wild Elf medicine — various effects", "icon": 1254}, {"id": 290, "en": "High Elf Medicine", "jp": "ハイエルフの薬", "section": "Potions / Medicines", "desc": "Secret High Elf medicine — various effects", "icon": 1255}, {"id": 291, "en": "Wood Elf Medicine", "jp": "ウッドエルフの薬", "section": "Potions / Medicines", "desc": "Secret Wood Elf medicine — various effects", "icon": 1256}, {"id": 292, "en": "Dwarf Medicine", "jp": "ドワーフの薬", "section": "Potions / Medicines", "desc": "Secret Dwarf medicine — various effects", "icon": 1257}, {"id": 293, "en": "Beautiful Skin Medicine", "jp": "美肌の薬", "section": "Potions / Medicines", "desc": "Herb shop original ointment — moisturizes, keeps skin youthful", "icon": 327}, {"id": 294, "en": "Sachet", "jp": "香り袋", "section": "Potions / Medicines", "desc": "Calming scent when smelled", "icon": 328}, {"id": 295, "en": "Sweet Sachet", "jp": "甘い香り袋", "section": "Potions / Medicines", "desc": "Relieves stress when smelled", "icon": 329}, {"id": 296, "en": "Refreshing Sachet", "jp": "さわやかな香り袋", "section": "Potions / Medicines", "desc": "Refreshes your mood when smelled", "icon": 330}, {"id": 297, "en": "Enchanting Sachet", "jp": "メロメロな香り袋", "section": "Potions / Medicines", "desc": "Helps you sleep soundly", "icon": 331}, {"id": 298, "en": "Pocket Warmer", "jp": "懐炉", "section": "Potions / Medicines", "desc": "Herb shop original — warms you on cold days", "icon": 300}, {"id": 299, "en": "Panacea", "jp": "万能薬", "section": "Potions / Medicines", "desc": "Expensive — cures any status ailment", "icon": 333}, {"id": 301, "en": "Tree Branch", "jp": "木の枝", "section": "Materials (wood / stone / ore / gems)", "desc": "Good enough to burn", "icon": 336}, {"id": 302, "en": "Firewood (Unused)", "jp": "【未】薪", "section": "Materials (wood / stone / ore / gems)", "desc": "(no description)", "icon": 337}, {"id": 303, "en": "Lumber", "jp": "木材", "section": "Materials (wood / stone / ore / gems)", "desc": "Wood from local trees — usable as material", "icon": 338}, {"id": 304, "en": "Ironwood", "jp": "アイアンウッド", "section": "Materials (wood / stone / ore / gems)", "desc": "Hard timber colored like iron", "icon": 339}, {"id": 305, "en": "Bloodwood", "jp": "ブラッドウッド", "section": "Materials (wood / stone / ore / gems)", "desc": "Vivid red surface", "icon": 340}, {"id": 306, "en": "Livingwood", "jp": "リヴィングウッド", "section": "Materials (wood / stone / ore / gems)", "desc": "High vitality — self-heals when sprayed with water", "icon": 341}, {"id": 307, "en": "Ancient Tree", "jp": "古代樹", "section": "Materials (wood / stone / ore / gems)", "desc": "Magic-imbued timber, aged over years", "icon": 342}, {"id": 308, "en": "White Horse Tree", "jp": "白馬樹", "section": "Materials (wood / stone / ore / gems)", "desc": "Sacred timber said to grow only where unicorns live", "icon": 343}, {"id": 309, "en": "Tree Sap (Unused)", "jp": "【未】樹液", "section": "Materials (wood / stone / ore / gems)", "desc": "Sweet-smelling liquid secreted from a tree", "icon": 347}, {"id": 310, "en": "Honey", "jp": "蜂蜜", "section": "Materials (wood / stone / ore / gems)", "desc": "Usable as a cooking ingredient", "icon": 348}, {"id": 311, "en": "Fertilizer (Unused)", "jp": "【未】肥料", "section": "Materials (wood / stone / ore / gems)", "desc": "Promotes crop growth when spread on fields", "icon": 349}, {"id": 312, "en": "Water", "jp": "水", "section": "Materials (wood / stone / ore / gems)", "desc": "Clean Zoltan groundwater — for fields or cooking", "icon": 350}, {"id": 314, "en": "Seashell", "jp": "貝殻", "section": "Materials (wood / stone / ore / gems)", "desc": "Picked up on the beach", "icon": 352}, {"id": 315, "en": "Pretty Seashell", "jp": "きれいな貝殻", "section": "Materials (wood / stone / ore / gems)", "desc": "Rare pink color", "icon": 353}, {"id": 316, "en": "Starfish", "jp": "ヒトデ", "section": "Materials (wood / stone / ore / gems)", "desc": "Dried-out, washed ashore", "icon": 354}, {"id": 317, "en": "Fish Fossil (Unused)", "jp": "【未】魚の化石", "section": "Materials (wood / stone / ore / gems)", "desc": "(no description)", "icon": 355}, {"id": 318, "en": "Empty Bottle", "jp": "空き瓶", "section": "Materials (wood / stone / ore / gems)", "desc": "No letter inside", "icon": 356}, {"id": 319, "en": "Red Coral Fragment", "jp": "赤サンゴの欠片", "section": "Materials (wood / stone / ore / gems)", "desc": "Use for accessories", "icon": 357}, {"id": 320, "en": "Blue Coral Fragment", "jp": "青サンゴの欠片", "section": "Materials (wood / stone / ore / gems)", "desc": "Use for accessories", "icon": 358}, {"id": 321, "en": "Gold Dust (Unused)", "jp": "【未】砂金", "section": "Materials (wood / stone / ore / gems)", "desc": "(no description)", "icon": 0}, {"id": 322, "en": "Holy Dew Thread", "jp": "聖なる露糸", "section": "Materials (wood / stone / ore / gems)", "desc": "Gathered deep in the elf forest — retains magic easily", "icon": 359}, {"id": 323, "en": "Stone", "jp": "石", "section": "Materials (wood / stone / ore / gems)", "desc": "Usable if processed", "icon": 361}, {"id": 324, "en": "Ivory Stone", "jp": "象牙石", "section": "Materials (wood / stone / ore / gems)", "desc": "Sharper, sturdier than ordinary stone", "icon": 362}, {"id": 325, "en": "Obsidian", "jp": "黒曜石", "section": "Materials (wood / stone / ore / gems)", "desc": "Extremely sharp fracture surface when split", "icon": 363}, {"id": 326, "en": "Hot Stone (Unused)", "jp": "【未】ホットストーン", "section": "Materials (wood / stone / ore / gems)", "desc": "A rare stone that gives off heat", "icon": 364}, {"id": 327, "en": "Energy Stone (Unused)", "jp": "【未】エナジーストーン", "section": "Materials (wood / stone / ore / gems)", "desc": "A rare stone with strong magic power", "icon": 365}, {"id": 329, "en": "Coal", "jp": "石炭", "section": "Materials (wood / stone / ore / gems)", "desc": "Rare in Zoltan — smelting fuel", "icon": 368}, {"id": 330, "en": "Copper Ore", "jp": "銅鉱石", "section": "Materials (wood / stone / ore / gems)", "desc": "Becomes an ingot when smelted", "icon": 376}, {"id": 331, "en": "Iron Ore", "jp": "鉄鉱石", "section": "Materials (wood / stone / ore / gems)", "desc": "Becomes an ingot when smelted", "icon": 377}, {"id": 332, "en": "Silver Ore", "jp": "銀鉱石", "section": "Materials (wood / stone / ore / gems)", "desc": "Becomes an ingot when smelted", "icon": 378}, {"id": 333, "en": "Gold Ore", "jp": "金鉱石", "section": "Materials (wood / stone / ore / gems)", "desc": "Becomes an ingot when smelted", "icon": 379}, {"id": 334, "en": "Crimson Ore", "jp": "紅鉱石", "section": "Materials (wood / stone / ore / gems)", "desc": "Tougher when mixed with steel", "icon": 370}, {"id": 335, "en": "Mithril Silver Ore", "jp": "ミスリル銀鉱石", "section": "Materials (wood / stone / ore / gems)", "desc": "Extremely rare — becomes an ingot when smelted", "icon": 387}, {"id": 336, "en": "Orichalcum", "jp": "オリハルコン", "section": "Materials (wood / stone / ore / gems)", "desc": "A legendary ore that rarely appears", "icon": 390}, {"id": 338, "en": "Copper Ingot", "jp": "銅のインゴット", "section": "Materials (wood / stone / ore / gems)", "desc": "For pickaxes/equipment", "icon": 392}, {"id": 339, "en": "Iron Ingot", "jp": "鉄のインゴット", "section": "Materials (wood / stone / ore / gems)", "desc": "For pickaxes/equipment", "icon": 393}, {"id": 340, "en": "Steel Ingot", "jp": "鋼のインゴット", "section": "Materials (wood / stone / ore / gems)", "desc": "Iron + coal smelted together", "icon": 394}, {"id": 341, "en": "Silver Ingot", "jp": "銀のインゴット", "section": "Materials (wood / stone / ore / gems)", "desc": "For equipment", "icon": 395}, {"id": 342, "en": "Gold Ingot", "jp": "金のインゴット", "section": "Materials (wood / stone / ore / gems)", "desc": "For equipment", "icon": 396}, {"id": 343, "en": "Crimson Steel Ingot", "jp": "紅鋼のインゴット", "section": "Materials (wood / stone / ore / gems)", "desc": "Crimson ore + iron + coal smelted together", "icon": 397}, {"id": 344, "en": "Mithril Silver Ingot", "jp": "ミスリル銀のインゴット", "section": "Materials (wood / stone / ore / gems)", "desc": "For pickaxes/equipment", "icon": 398}, {"id": 345, "en": "Platinum Ingot (Unused)", "jp": "【未】白金のインゴット", "section": "Materials (wood / stone / ore / gems)", "desc": "Highly rare", "icon": 399}, {"id": 347, "en": "Ruby Crystal", "jp": "ルビーの結晶", "section": "Materials (wood / stone / ore / gems)", "desc": "Accessories / sells high", "icon": 400}, {"id": 348, "en": "Topaz Crystal", "jp": "トパーズの結晶", "section": "Materials (wood / stone / ore / gems)", "desc": "Accessories / sells high", "icon": 401}, {"id": 349, "en": "Amber Crystal", "jp": "コハクの結晶", "section": "Materials (wood / stone / ore / gems)", "desc": "Natural resin gem — accessories / sells high", "icon": 402}, {"id": 350, "en": "Emerald Crystal", "jp": "エメラルドの結晶", "section": "Materials (wood / stone / ore / gems)", "desc": "Accessories / sells high", "icon": 403}, {"id": 351, "en": "Aquamarine Crystal", "jp": "アクアマリンの結晶", "section": "Materials (wood / stone / ore / gems)", "desc": "Accessories / sells high", "icon": 405}, {"id": 352, "en": "Amethyst Crystal", "jp": "アメジストの結晶", "section": "Materials (wood / stone / ore / gems)", "desc": "Accessories / sells high", "icon": 406}, {"id": 353, "en": "Diamond Crystal", "jp": "ダイヤモンドの結晶", "section": "Materials (wood / stone / ore / gems)", "desc": "Pure white, top-grade — accessories / sells high", "icon": 409}, {"id": 354, "en": "Jade Stone", "jp": "ヒスイの石", "section": "Materials (wood / stone / ore / gems)", "desc": "Popular accessory material in the central region", "icon": 410}, {"id": 356, "en": "Slime Mucus", "jp": "粘液", "section": "Monster drops & misc materials", "desc": "Seems useful for something", "icon": 416}, {"id": 357, "en": "Amazing Mucus", "jp": "すごい粘液", "section": "Monster drops & misc materials", "desc": "Extremely sticky", "icon": 417}, {"id": 359, "en": "Blue Gelatin", "jp": "青いゼラチン", "section": "Monster drops & misc materials", "desc": "Rare drop from slimes", "icon": 419}, {"id": 360, "en": "Green Jelly", "jp": "緑色のゼリー", "section": "Monster drops & misc materials", "desc": "Rare drop from slimes", "icon": 420}, {"id": 361, "en": "Magma Jelly", "jp": "マグマゼリー", "section": "Monster drops & misc materials", "desc": "Burning-red color — rare drop from slimes", "icon": 421}, {"id": 362, "en": "Black Oil", "jp": "ブラックオイル", "section": "Monster drops & misc materials", "desc": "Very sticky — rare drop from slimes", "icon": 423}, {"id": 363, "en": "White Jelly", "jp": "ホワイトゼリー", "section": "Monster drops & misc materials", "desc": "Snow-white — rare drop from slimes", "icon": 422}, {"id": 364, "en": "Magic Jelly", "jp": "マジックゼリー", "section": "Monster drops & misc materials", "desc": "Faintly magic-imbued, purple — rare drop from slimes", "icon": 424}, {"id": 366, "en": "Lava Fragment", "jp": "溶岩のかけら", "section": "Monster drops & misc materials", "desc": "Faintly hot to the touch", "icon": 426}, {"id": 367, "en": "Ice Fragment", "jp": "氷のかけら", "section": "Monster drops & misc materials", "desc": "A small chunk of ice", "icon": 428}, {"id": 368, "en": "Magic Crystal Fragment", "jp": "魔法結晶のかけら", "section": "Monster drops & misc materials", "desc": "Imbued with magic power", "icon": 429}, {"id": 370, "en": "Goblin Fang", "jp": "ゴブリンの牙", "section": "Monster drops & misc materials", "desc": "Dropped by a goblin", "icon": 432}, {"id": 371, "en": "Goblin Fur", "jp": "ゴブリンの毛皮", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 433}, {"id": 372, "en": "Red Goblin Fur", "jp": "レッドゴブリンの毛皮", "section": "Monster drops & misc materials", "desc": "Higher-quality — armor material", "icon": 434}, {"id": 373, "en": "Dark Goblin Fur", "jp": "ダークゴブリンの毛皮", "section": "Monster drops & misc materials", "desc": "High-quality — armor material", "icon": 380}, {"id": 374, "en": "Lizard Tail", "jp": "トカゲのしっぽ", "section": "Monster drops & misc materials", "desc": "Cut off a lizard-type monster", "icon": 435}, {"id": 375, "en": "Lizard Scale", "jp": "トカゲの鱗", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 436}, {"id": 376, "en": "Large Lizard Scale", "jp": "トカゲの大鱗", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 437}, {"id": 377, "en": "Lizard's Shield", "jp": "リザードの盾", "section": "Monster drops & misc materials", "desc": "A wooden shield — can't be equipped by you", "icon": 438}, {"id": 378, "en": "Orc Shoulder Armor", "jp": "オークの肩鎧", "section": "Monster drops & misc materials", "desc": "Worn by an orc", "icon": 439}, {"id": 379, "en": "Spiky Shoulder Armor", "jp": "とげとげの肩鎧", "section": "Monster drops & misc materials", "desc": "Fitted with sharp spikes", "icon": 440}, {"id": 380, "en": "Red Mane", "jp": "赤いたてがみ", "section": "Monster drops & misc materials", "desc": "An orc's prized mane", "icon": 441}, {"id": 381, "en": "Golden Mane", "jp": "金色のたてがみ", "section": "Monster drops & misc materials", "desc": "A Blood Orc's prized mane", "icon": 442}, {"id": 382, "en": "Purple Mane", "jp": "紫のたてがみ", "section": "Monster drops & misc materials", "desc": "A Dark Orc's prized mane", "icon": 443}, {"id": 384, "en": "Troll Hide", "jp": "トロルの皮", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 445}, {"id": 385, "en": "Gug Hide", "jp": "ガグの皮", "section": "Monster drops & misc materials", "desc": "Green, rugged — armor material", "icon": 446}, {"id": 386, "en": "Scrag Hide", "jp": "スクラグの皮", "section": "Monster drops & misc materials", "desc": "Mucous-covered — armor material", "icon": 447}, {"id": 387, "en": "Mana Mud", "jp": "魔力の泥", "section": "Monster drops & misc materials", "desc": "Remains of a large magic-imbued monster", "icon": 381}, {"id": 388, "en": "Common Copper Coin", "jp": "コモーン銅貨", "section": "Monster drops & misc materials", "desc": "Zoltan currency — sell via shipping box", "icon": 448}, {"id": 389, "en": "Peril Silver Coin", "jp": "ペリル銀貨", "section": "Monster drops & misc materials", "desc": "Zoltan currency — sell via shipping box", "icon": 449}, {"id": 390, "en": "Elven Coin", "jp": "エルヴン硬貨", "section": "Monster drops & misc materials", "desc": "Highly rare, lost minting method — boosts blessing power", "icon": 450}, {"id": 391, "en": "Bag of Copper Coins", "jp": "銅貨の袋", "section": "Monster drops & misc materials", "desc": "Sell via shipping box", "icon": 454}, {"id": 392, "en": "Bag of Silver Coins", "jp": "銀貨の袋", "section": "Monster drops & misc materials", "desc": "Sell via shipping box", "icon": 455}, {"id": 393, "en": "Bag of Gold Coins", "jp": "金貨の袋", "section": "Monster drops & misc materials", "desc": "Sell via shipping box", "icon": 456}, {"id": 394, "en": "Large Bag of Gold Coins", "jp": "金貨の大袋", "section": "Monster drops & misc materials", "desc": "Sell via shipping box", "icon": 457}, {"id": 395, "en": "Red Cloth Scrap", "jp": "赤い布きれ", "section": "Monster drops & misc materials", "desc": "Worn by a bandit", "icon": 458}, {"id": 396, "en": "Purple Cloth Scrap", "jp": "紫の布きれ", "section": "Monster drops & misc materials", "desc": "Worn by a bandit", "icon": 459}, {"id": 397, "en": "Beast Hide", "jp": "獣の皮", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 460}, {"id": 398, "en": "Quality Fur", "jp": "良質な毛皮", "section": "Monster drops & misc materials", "desc": "Smooth, high-quality — armor material", "icon": 461}, {"id": 399, "en": "Kobold Fur", "jp": "コボルトの毛皮", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 462}, {"id": 400, "en": "Fluffy Tail", "jp": "ふさふさなしっぽ", "section": "Monster drops & misc materials", "desc": "Tickles your skin", "icon": 463}, {"id": 401, "en": "Red Eyepatch", "jp": "赤い眼帯", "section": "Monster drops & misc materials", "desc": "Worn by a kobold", "icon": 464}, {"id": 402, "en": "Blue Eyepatch", "jp": "青い眼帯", "section": "Monster drops & misc materials", "desc": "Worn by a kobold", "icon": 465}, {"id": 403, "en": "Sharp Claw", "jp": "するどい爪", "section": "Monster drops & misc materials", "desc": "A beast's broken claw", "icon": 466}, {"id": 404, "en": "Beast Horn", "jp": "獣の角", "section": "Monster drops & misc materials", "desc": "A sharp horn", "icon": 467}, {"id": 405, "en": "Black Horn", "jp": "黒色の角", "section": "Monster drops & misc materials", "desc": "Larger, sturdier", "icon": 468}, {"id": 406, "en": "Bear Fur", "jp": "熊の毛皮", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 470}, {"id": 407, "en": "Bear Paw", "jp": "熊の手", "section": "Monster drops & misc materials", "desc": "A delicacy in some regions", "icon": 471}, {"id": 408, "en": "Bear Gallbladder", "jp": "熊の胆", "section": "Monster drops & misc materials", "desc": "Used as medicine in some regions", "icon": 472}, {"id": 409, "en": "Chimera Tail", "jp": "キマイラのしっぽ", "section": "Monster drops & misc materials", "desc": "Grew on a chimera", "icon": 473}, {"id": 410, "en": "Chimera Wing", "jp": "キマイラの翼", "section": "Monster drops & misc materials", "desc": "Large, black", "icon": 474}, {"id": 411, "en": "Tainted Wing", "jp": "穢れた翼", "section": "Monster drops & misc materials", "desc": "From a giant beast", "icon": 475}, {"id": 412, "en": "Green Eyepatch", "jp": "緑の眼帯", "section": "Monster drops & misc materials", "desc": "Worn by a kobold", "icon": 382}, {"id": 413, "en": "Small Stinger", "jp": "小さな針", "section": "Monster drops & misc materials", "desc": "Venom fully drained", "icon": 477}, {"id": 414, "en": "Insect Wing", "jp": "昆虫のハネ", "section": "Monster drops & misc materials", "desc": "From an insect-type monster", "icon": 478}, {"id": 415, "en": "Insect Carapace", "jp": "昆虫の甲殻", "section": "Monster drops & misc materials", "desc": "Dropped by a giant insect", "icon": 479}, {"id": 416, "en": "Polar Bear Fur", "jp": "白熊の毛皮", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 383}, {"id": 417, "en": "Mandrake Root", "jp": "マンドラゴラの根", "section": "Monster drops & misc materials", "desc": "Absorbs nutrients from soil", "icon": 481}, {"id": 418, "en": "Mandrake Bulb", "jp": "マンドラゴラの球根", "section": "Monster drops & misc materials", "desc": "Stores absorbed nutrients", "icon": 482}, {"id": 419, "en": "Rafflesia Petal", "jp": "ラフレシアの花びら", "section": "Monster drops & misc materials", "desc": "Blooms with surplus nutrients", "icon": 483}, {"id": 420, "en": "Writhing Tentacle", "jp": "うねうね触手", "section": "Monster drops & misc materials", "desc": "Maneuvered like a limb", "icon": 484}, {"id": 421, "en": "Man-Eating Flower", "jp": "食人花", "section": "Monster drops & misc materials", "desc": "Bloomed by an insectivorous plant-type", "icon": 485}, {"id": 422, "en": "Mushroom Spore", "jp": "キノコの胞子", "section": "Monster drops & misc materials", "desc": "From a mushroom-type monster", "icon": 487}, {"id": 423, "en": "Sleep Powder", "jp": "眠りの粉", "section": "Monster drops & misc materials", "desc": "Sleep-inducing effect", "icon": 488}, {"id": 424, "en": "Paralysis Powder", "jp": "マヒの粉", "section": "Monster drops & misc materials", "desc": "Paralyzing effect", "icon": 489}, {"id": 425, "en": "Giant Tree Fragment", "jp": "巨樹のかけら", "section": "Monster drops & misc materials", "desc": "Bark aged over years", "icon": 490}, {"id": 426, "en": "Purple Bark", "jp": "紫色の樹皮", "section": "Monster drops & misc materials", "desc": "Dropped by a Treant-type", "icon": 492}, {"id": 427, "en": "Snake Slough", "jp": "蛇のぬけがら", "section": "Monster drops & misc materials", "desc": "A shed skin, quite large", "icon": 493}, {"id": 428, "en": "Snakeskin", "jp": "蛇皮", "section": "Monster drops & misc materials", "desc": "Fetches a high price in some regions", "icon": 494}, {"id": 429, "en": "Black Snakeskin", "jp": "黒い蛇皮", "section": "Monster drops & misc materials", "desc": "Fetches a high price in some regions", "icon": 495}, {"id": 430, "en": "White Snakeskin", "jp": "白い蛇皮", "section": "Monster drops & misc materials", "desc": "Fetches a high price in some regions", "icon": 496}, {"id": 431, "en": "Bird Feather", "jp": "鳥の羽", "section": "Monster drops & misc materials", "desc": "Beautiful white", "icon": 497}, {"id": 432, "en": "Giant Bird Feather", "jp": "巨大鳥の羽", "section": "Monster drops & misc materials", "desc": "Very large", "icon": 498}, {"id": 433, "en": "Blazing Feather", "jp": "燃えさかる羽", "section": "Monster drops & misc materials", "desc": "Magic-imbued — handle with care", "icon": 499}, {"id": 434, "en": "Fairy Wing (Unused)", "jp": "【未】妖精の羽", "section": "Monster drops & misc materials", "desc": "A beautiful pink wing", "icon": 500}, {"id": 435, "en": "Sharp Talon (Unused)", "jp": "【未】鋭利な鉤爪", "section": "Monster drops & misc materials", "desc": "Dropped by a wolf-type monster", "icon": 501}, {"id": 437, "en": "Bat Wing", "jp": "コウモリの翼", "section": "Monster drops & misc materials", "desc": "Suited for blending into darkness", "icon": 503}, {"id": 438, "en": "Bat Fang", "jp": "コウモリの牙", "section": "Monster drops & misc materials", "desc": "Specialized for drinking blood", "icon": 504}, {"id": 439, "en": "Spider Silk", "jp": "蜘蛛の糸", "section": "Monster drops & misc materials", "desc": "Spat out by a giant spider", "icon": 505}, {"id": 440, "en": "Demon Tail", "jp": "悪魔のしっぽ", "section": "Monster drops & misc materials", "desc": "From a devil-type monster", "icon": 506}, {"id": 441, "en": "Demon Fire", "jp": "悪魔の火", "section": "Monster drops & misc materials", "desc": "Left behind by a devil-type", "icon": 507}, {"id": 442, "en": "Succubus Tail", "jp": "夢魔のしっぽ", "section": "Monster drops & misc materials", "desc": "Purple tip", "icon": 508}, {"id": 443, "en": "Succubus Temptation", "jp": "夢魔の誘惑", "section": "Monster drops & misc materials", "desc": "Materialized magic power", "icon": 509}, {"id": 444, "en": "Lamia Tail", "jp": "ラミアのしっぽ", "section": "Monster drops & misc materials", "desc": "Dropped by a lamia", "icon": 510}, {"id": 445, "en": "Lamia Temptation", "jp": "ラミアの誘惑", "section": "Monster drops & misc materials", "desc": "Materialized magic power", "icon": 511}, {"id": 446, "en": "Demon Wing", "jp": "デーモンの羽", "section": "Monster drops & misc materials", "desc": "From a large demon-type — heavy and sturdy", "icon": 512}, {"id": 447, "en": "Demon Heart", "jp": "デーモンの心臓", "section": "Monster drops & misc materials", "desc": "Used compounding dangerous medicines", "icon": 513}, {"id": 448, "en": "Demon Flame", "jp": "デーモンの炎", "section": "Monster drops & misc materials", "desc": "Left behind by a demon", "icon": 514}, {"id": 449, "en": "Ghost's Soul (Unused)", "jp": "【未】亡霊の魂", "section": "Monster drops & misc materials", "desc": "Trace of a wandering soul", "icon": 515}, {"id": 450, "en": "Corpse Flesh (Unused)", "jp": "【未】屍肉", "section": "Monster drops & misc materials", "desc": "Dropped by a zombie", "icon": 516}, {"id": 451, "en": "Torn Cloth Scrap (Unused)", "jp": "【未】破れた布きれ", "section": "Monster drops & misc materials", "desc": "Worn by a humanoid monster", "icon": 517}, {"id": 452, "en": "Bone (Unused)", "jp": "【未】骨", "section": "Monster drops & misc materials", "desc": "Dropped by an undead knight", "icon": 518}, {"id": 453, "en": "Skull (Unused)", "jp": "【未】頭蓋骨", "section": "Monster drops & misc materials", "desc": "Dropped by an undead knight", "icon": 519}, {"id": 454, "en": "White Cloth (Unused)", "jp": "【未】白い布", "section": "Monster drops & misc materials", "desc": "Worn by a ghost-type monster", "icon": 520}, {"id": 455, "en": "Gray Cloth (Unused)", "jp": "【未】灰色の布", "section": "Monster drops & misc materials", "desc": "Worn by a ghost-type monster", "icon": 521}, {"id": 456, "en": "Scorpion Tail", "jp": "サソリのしっぽ", "section": "Monster drops & misc materials", "desc": "Poisonous — handle with care", "icon": 524}, {"id": 457, "en": "Rat Tail", "jp": "ネズミのしっぽ", "section": "Monster drops & misc materials", "desc": "Unclear use", "icon": 525}, {"id": 458, "en": "Rat Hide", "jp": "ネズミの皮", "section": "Monster drops & misc materials", "desc": "Unclear use", "icon": 526}, {"id": 459, "en": "Fire Rat Hide", "jp": "火鼠の皮", "section": "Monster drops & misc materials", "desc": "High fire resistance — sometimes used in equipment", "icon": 527}, {"id": 460, "en": "Frog Webbing", "jp": "カエルの水かき", "section": "Monster drops & misc materials", "desc": "Seems useful for something", "icon": 528}, {"id": 461, "en": "Red Frog Webbing", "jp": "赤カエルの水かき", "section": "Monster drops & misc materials", "desc": "Seems useful for something", "icon": 529}, {"id": 462, "en": "Blue Carapace", "jp": "青い甲殻", "section": "Monster drops & misc materials", "desc": "Extremely hard — armor material", "icon": 530}, {"id": 463, "en": "Shark Scale", "jp": "サメの鱗", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 531}, {"id": 464, "en": "Shark Tooth", "jp": "サメの歯", "section": "Monster drops & misc materials", "desc": "Popular as an accessory", "icon": 532}, {"id": 465, "en": "Crocodile Leather", "jp": "ワニの革", "section": "Monster drops & misc materials", "desc": "Fetches a high price in some regions", "icon": 533}, {"id": 466, "en": "Crab Claw", "jp": "カニの爪", "section": "Monster drops & misc materials", "desc": "Apparently edible too", "icon": 534}, {"id": 467, "en": "Hard Carapace", "jp": "固い甲殻", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 535}, {"id": 468, "en": "Squid Ink", "jp": "イカスミ", "section": "Monster drops & misc materials", "desc": "Jet-black", "icon": 536}, {"id": 470, "en": "Dragon Scale", "jp": "竜の鱗", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 538}, {"id": 471, "en": "Dragon Fang", "jp": "竜の牙", "section": "Monster drops & misc materials", "desc": "The largest, most sturdy — armor material", "icon": 539}, {"id": 472, "en": "Red Dragon Scale", "jp": "赤竜の鱗", "section": "Monster drops & misc materials", "desc": "Armor material", "icon": 540}, {"id": 473, "en": "Ancient Dragon Fang", "jp": "古代竜の牙", "section": "Monster drops & misc materials", "desc": "Thousands of years old — armor material", "icon": 541}, {"id": 474, "en": "Dragon's Breath", "jp": "竜の息吹", "section": "Monster drops & misc materials", "desc": "Magic power turned to mist", "icon": 542}, {"id": 475, "en": "Golem Stone", "jp": "ゴーレム石", "section": "Monster drops & misc materials", "desc": "Formed part of a golem", "icon": 544}, {"id": 476, "en": "Golem Core", "jp": "ゴーレムコア", "section": "Monster drops & misc materials", "desc": "Governs a golem's functions", "icon": 545}, {"id": 477, "en": "Crystal Shard", "jp": "水晶のかけら", "section": "Monster drops & misc materials", "desc": "Clear, white", "icon": 546}, {"id": 478, "en": "Black Crystal Shard", "jp": "黒水晶のかけら", "section": "Monster drops & misc materials", "desc": "Clear, black", "icon": 547}, {"id": 479, "en": "Small Gear", "jp": "小さな歯車", "section": "Monster drops & misc materials", "desc": "Dropped by a Gear Beast", "icon": 554}, {"id": 480, "en": "Large Gear", "jp": "大きな歯車", "section": "Monster drops & misc materials", "desc": "Dropped by a Gear Beast", "icon": 555}, {"id": 481, "en": "Runner-Dragon Dung", "jp": "走竜のフン", "section": "Monster drops & misc materials", "desc": "\"Warm. Smelly.\"", "icon": 548}, {"id": 482, "en": "Gonz's Socks", "jp": "ゴンズの靴下", "section": "Monster drops & misc materials", "desc": "He loses them a lot at work (Gonzu NPC reference)", "icon": 959}, {"id": 484, "en": "Sugar-Water-Soaked Cloth (Unused)", "jp": "【未】砂糖水を染み込ませた布", "section": "Monster drops & misc materials", "desc": "Ugeuge-san's favorite", "icon": 0}, {"id": 485, "en": "Tise Manjū (Unused)", "jp": "【未】ティセ饅頭", "section": "Monster drops & misc materials", "desc": "Zoltan tourism souvenir; Tise doesn't seem to mind it", "icon": 0}, {"id": 486, "en": "Lizard Plush (Unused)", "jp": "【未】リザードのぬいぐるみ", "section": "Monster drops & misc materials", "desc": "A cute plush toy", "icon": 550}, {"id": 487, "en": "Matango Plush (Unused)", "jp": "【未】マタンゴのぬいぐるみ", "section": "Monster drops & misc materials", "desc": "A cute plush toy", "icon": 551}, {"id": 488, "en": "Fenrir Plush (Unused)", "jp": "【未】フェンリルのぬいぐるみ", "section": "Monster drops & misc materials", "desc": "A cute plush toy", "icon": 552}, {"id": 489, "en": "Succubus Plush (Unused)", "jp": "【未】夢魔のぬいぐるみ", "section": "Monster drops & misc materials", "desc": "A cute plush toy", "icon": 553}, {"id": 491, "en": "Litt's Special Potion", "jp": "リット特製ポーション", "section": "Monster drops & misc materials", "desc": "An original recipe, apparently — but...?", "icon": 1270}, {"id": 492, "en": "Ruti's Special Potion", "jp": "ルーティ特製ポーション", "section": "Monster drops & misc materials", "desc": "Made by watching and imitating, apparently", "icon": 1271}, {"id": 493, "en": "Yarandrala's Special Potion", "jp": "ヤランドララ特製ポーション", "section": "Monster drops & misc materials", "desc": "Trial-and-error to suit humans too", "icon": 1272}, {"id": 494, "en": "Tise's Special Potion", "jp": "ティセ特製ポーション", "section": "Monster drops & misc materials", "desc": "Her assassin experience put to use", "icon": 1273}, {"id": 495, "en": "Ugeuge-san's Special Potion (Unused)", "jp": "【未】うげうげさん特製ポーション", "section": "Monster drops & misc materials", "desc": "Learned to make it together with Tise", "icon": 335}, {"id": 497, "en": "Test Medicine", "jp": "検査薬", "section": "Monster drops & misc materials", "desc": "*Not obtainable during normal gameplay (dev/debug item)", "icon": 4}, {"id": 501, "en": "Interior Expansion Lv.1", "jp": "内装拡張 Lv.1", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Expands the shop; more chest/product-table slots. Rank up at the Guild first", "icon": 671}, {"id": 502, "en": "Interior Expansion Lv.2", "jp": "内装拡張 Lv.2", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Expands the shop further", "icon": 671}, {"id": 503, "en": "Interior Expansion Lv.3", "jp": "内装拡張 Lv.3", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Expands the shop further", "icon": 671}, {"id": 504, "en": "Interior Expansion Lv.4", "jp": "内装拡張 Lv.4", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Expands the shop further", "icon": 671}, {"id": 505, "en": "Chest", "jp": "チェスト", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Adds one chest to the shop", "icon": 668}, {"id": 506, "en": "Product Table", "jp": "商品机", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Adds one product table", "icon": 669}, {"id": 507, "en": "Furnace", "jp": "かまど", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Adds one ore-smelting furnace", "icon": 670}, {"id": 508, "en": "Field", "jp": "畑", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Expands the crop-growing area", "icon": 14}, {"id": 509, "en": "Locked Chest", "jp": "鍵付きチェスト", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Adds one locked chest", "icon": 13}, {"id": 510, "en": "Portable Smithing Tools", "jp": "持ち運び鍛冶道具", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Craft slightly stronger weapons/pickaxes from the Craft menu", "icon": 42}, {"id": 511, "en": "Herb Planter", "jp": "薬草プラント", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Adds one herb planter", "icon": 1150}, {"id": 512, "en": "Mushroom Log", "jp": "キノコ原木", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Adds one mushroom log", "icon": 1151}, {"id": 513, "en": "Chest+", "jp": "チェスト＋", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Expands the chest by one slot", "icon": 668}, {"id": 514, "en": "Portable Smithing Tools Lv.2", "jp": "持ち運び鍛冶道具 Lv.2", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Craft moderately strong weapons/pickaxes", "icon": 42}, {"id": 515, "en": "Portable Smithing Tools Lv.3", "jp": "持ち運び鍛冶道具 Lv.3", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Craft quite strong weapons/pickaxes", "icon": 42}, {"id": 516, "en": "Locked Chest+", "jp": "鍵付きチェスト＋", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Expands the locked chest by one slot", "icon": 13}, {"id": 517, "en": "Furnace+", "jp": "かまど＋", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Expands the furnace by one slot", "icon": 670}, {"id": 518, "en": "Stable Expansion", "jp": "飼育小屋拡張", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Increases runner-dragons you can raise", "icon": 1116}, {"id": 519, "en": "Training Ground Expansion", "jp": "トレーニング場拡張", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Increases training types available", "icon": 559}, {"id": 520, "en": "Orchard", "jp": "果樹園", "section": "Gonz — shop/facility upgrades (`--------ゴンズ--------`)", "desc": "Expands the orchard area", "icon": 15}], "Weapons": [{"id": 1, "en": "Red (calc)", "jp": "レッド計算用", "section": "Internal calc placeholders (not real items)", "desc": "Internal stat-calculation placeholder, not a real obtainable weapon", "icon": 0}, {"id": 2, "en": "Litt (calc)", "jp": "リット計算用", "section": "Internal calc placeholders (not real items)", "desc": "Internal stat-calculation placeholder", "icon": 0}, {"id": 3, "en": "Ruti (calc)", "jp": "ルーティ計算用", "section": "Internal calc placeholders (not real items)", "desc": "Internal stat-calculation placeholder", "icon": 0}, {"id": 4, "en": "Yarandrala (calc)", "jp": "ヤランドララ計算用", "section": "Internal calc placeholders (not real items)", "desc": "Internal stat-calculation placeholder", "icon": 0}, {"id": 5, "en": "Tise (calc)", "jp": "ティセ計算用", "section": "Internal calc placeholders (not real items)", "desc": "Internal stat-calculation placeholder", "icon": 0}, {"id": 9, "en": "Wooden Pickaxe", "jp": "木のつるはし", "section": "Pickaxes (`------つるはし-------`)", "desc": "A wooden pickaxe, for mining (= Item ID 1009)", "icon": 32}, {"id": 10, "en": "Stone Pickaxe", "jp": "石のつるはし", "section": "Pickaxes (`------つるはし-------`)", "desc": "A stone pickaxe, for mining (= Item ID 1010)", "icon": 33}, {"id": 11, "en": "Copper Pickaxe", "jp": "銅のつるはし", "section": "Pickaxes (`------つるはし-------`)", "desc": "A copper pickaxe, for mining", "icon": 34}, {"id": 12, "en": "Iron Pickaxe", "jp": "鉄のつるはし", "section": "Pickaxes (`------つるはし-------`)", "desc": "An iron pickaxe, for mining", "icon": 35}, {"id": 13, "en": "Steel Pickaxe", "jp": "鋼のつるはし", "section": "Pickaxes (`------つるはし-------`)", "desc": "A steel pickaxe, for mining", "icon": 36}, {"id": 14, "en": "Crimson Steel Pickaxe", "jp": "紅鋼のつるはし", "section": "Pickaxes (`------つるはし-------`)", "desc": "A crimson steel pickaxe, for mining", "icon": 37}, {"id": 15, "en": "Mithril Silver Pickaxe", "jp": "ミスリル銀のつるはし", "section": "Pickaxes (`------つるはし-------`)", "desc": "A mithril silver pickaxe, for mining", "icon": 38}, {"id": 16, "en": "Orichalcum Pickaxe", "jp": "オリハルコンのつるはし", "section": "Pickaxes (`------つるはし-------`)", "desc": "An orichalcum pickaxe, for mining", "icon": 39}, {"id": 20, "en": "Practice Sword", "jp": "練習用の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A wooden practice sword (= Item ID 1020)", "icon": 672}, {"id": 21, "en": "Wooden Sword (Unused)", "jp": "【未】木の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Wood sharpened to a point", "icon": 672}, {"id": 22, "en": "Stone Sword", "jp": "石の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Crafted by processing stone (= Item ID 1022)", "icon": 673}, {"id": 24, "en": "Copper Sword", "jp": "銅の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A well-used longsword", "icon": 674}, {"id": 25, "en": "Soldier's Sword", "jp": "兵士の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "General-purpose sword issued at the barracks", "icon": 675}, {"id": 26, "en": "Iron Sword", "jp": "鉄の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A heavy, solid iron longsword", "icon": 676}, {"id": 27, "en": "Steel Sword", "jp": "鋼の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A sharp steel longsword", "icon": 677}, {"id": 28, "en": "Argent Sword", "jp": "アルジャンソード", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A holy sword with a silver blade", "icon": 678}, {"id": 29, "en": "Crimson Steel Sword", "jp": "紅鋼の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Powerful, uses crimson-smelted steel", "icon": 680}, {"id": 30, "en": "Mithril Silver Sword", "jp": "ミスリル銀の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Sharp blade of rare mithril silver", "icon": 681}, {"id": 31, "en": "Orichalcum Sword", "jp": "オリハルコンの剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Made from the legendary ore", "icon": 682}, {"id": 33, "en": "Knight's Sword", "jp": "騎士の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A sharp sword used by knights", "icon": 684}, {"id": 34, "en": "Senior Knight's Sword", "jp": "上級騎士の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Wieldable only by well-trained knights", "icon": 685}, {"id": 35, "en": "Magic Sword", "jp": "魔法の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A silver sword strengthened with an attack-boost enchantment", "icon": 686}, {"id": 36, "en": "Fire-Breathing Sword", "jp": "火吹きの剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Enchanted with fire magic", "icon": 687}, {"id": 37, "en": "Ice Blade", "jp": "氷の刃", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Enchanted with ice magic", "icon": 688}, {"id": 38, "en": "Thunderclap Sword", "jp": "雷鳴の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Enchanted with lightning magic", "icon": 689}, {"id": 39, "en": "Elven Sword", "jp": "エルヴンソード", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Imbued by elven hands with magic beyond human ability", "icon": 690}, {"id": 40, "en": "Holy Sword", "jp": "ホーリーソード", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Worked with magic for defeating demons", "icon": 691}, {"id": 41, "en": "Great Tree Sword", "jp": "大樹の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Wooden, yet brimming with vitality — no less than metal", "icon": 692}, {"id": 42, "en": "Sword of Life (Unused)", "jp": "【未】生命の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "(no description)", "icon": 693}, {"id": 43, "en": "Jet-Black Sword", "jp": "漆黒の剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A demon weapon imbued with ominous magic power", "icon": 694}, {"id": 44, "en": "Sword of Light (Unused)", "jp": "【未】光のつるぎ", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "(no description)", "icon": 695}, {"id": 46, "en": "Squishy Sword", "jp": "むにむに剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "The blade is, for some reason, wrapped in mucus", "icon": 701}, {"id": 47, "en": "Squashy Sword", "jp": "ぷにぷに剣", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A masterpiece pursuing pure softness", "icon": 702}, {"id": 48, "en": "Goblin Blade", "jp": "ゴブリンブレード", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "The blade is full of holes and brittle", "icon": 703}, {"id": 49, "en": "Goblin Staff", "jp": "ゴブリンの杖", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "Carried by a goblin mage", "icon": 704}, {"id": 50, "en": "Lizard's Spear", "jp": "リザードの槍", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A well-worn, ordinary spear", "icon": 706}, {"id": 51, "en": "Orc's Cavalry Saber (Unused)", "jp": "【未】オークの騎兵刀(サーベル)", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A saber carried by an orc", "icon": 707}, {"id": 52, "en": "Kobold Sword", "jp": "コボルトソード", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A dull sword dropped by a kobold", "icon": 708}, {"id": 53, "en": "Bandit's Scimitar (Unused)", "jp": "【未】盗賊のシミター", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "A small throwing knife carried by a bandit", "icon": 709}, {"id": 55, "en": "Deba Kitchen Knife (Unused)", "jp": "【未】出刃包丁", "section": "Red / Ruti weapon line — swords (`---レッド・ルーティ---`)", "desc": "The tavern owner's knife — smells like fish", "icon": 710}, {"id": 66, "en": "Guiding Sword (Unused)", "jp": "【未】導きの剣", "section": "Red-exclusive (`------レッド-------`)", "desc": "Made for the guide", "icon": 696}, {"id": 67, "en": "Vorpal Blade (Unused)", "jp": "【未】ヴォーパル・ブレード", "section": "Red-exclusive (`------レッド-------`)", "desc": "A demon weapon crafted through a demon's murder-magic-sword skill", "icon": 697}, {"id": 68, "en": "Treasured Sword Thunderwaker (Unused)", "jp": "【未】宝剣サンダーウェイカー", "section": "Red-exclusive (`------レッド-------`)", "desc": "Said to awaken lightning when swung", "icon": 699}, {"id": 72, "en": "Stone Greatsword", "jp": "石の大剣", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "Very heavy, an ordinary person couldn't wield it", "icon": 712}, {"id": 73, "en": "Copper Greatsword", "jp": "銅の大剣", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "A large swing with excellent attack power", "icon": 713}, {"id": 74, "en": "Iron Greatsword", "jp": "鉄の大剣", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "A metal sword brimming with heft", "icon": 714}, {"id": 75, "en": "Steel Greatsword", "jp": "鋼の大剣", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "Sharp cutting power and destructive force", "icon": 715}, {"id": 76, "en": "Crimson Steel Greatsword", "jp": "紅鋼の大剣", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "Its large, crimson blade captivates onlookers", "icon": 716}, {"id": 77, "en": "Mithril Silver Greatsword", "jp": "ミスリル銀の大剣", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "Sharp blade of rare mithril silver", "icon": 717}, {"id": 78, "en": "Orichalcum Greatsword", "jp": "オリハルコンの大剣", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "Made from the legendary ore", "icon": 718}, {"id": 80, "en": "Great Axe", "jp": "大斧", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "An axe with a somewhat larger blade", "icon": 720}, {"id": 81, "en": "Battle Axe", "jp": "バトルアックス", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "A war axe pursuing ease of combat", "icon": 722}, {"id": 82, "en": "Heavy Axe", "jp": "ヘヴィアクス", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "Very heavy, outstanding destructive power", "icon": 723}, {"id": 83, "en": "Dragon Axe", "jp": "ドラゴンアクス", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "Sharp enough to cleave even a dragon, they say", "icon": 724}, {"id": 84, "en": "Great Hammer", "jp": "グレートハンマー", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "A very large metal mallet", "icon": 726}, {"id": 85, "en": "Troll Hammer", "jp": "トロルハンマー", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "Sized like one a troll would swing", "icon": 727}, {"id": 86, "en": "Hammer of Destruction", "jp": "破壊の槌", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "A massive metal mallet that can crush anything", "icon": 728}, {"id": 87, "en": "Great Scythe", "jp": "大鎌", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "The large scythe Alice carries on her back", "icon": 730}, {"id": 88, "en": "Death's Great Scythe (Unused)", "jp": "【未】死神の大鎌", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "Imbued with enough magic power to cleave anything", "icon": 731}, {"id": 90, "en": "Orc Club", "jp": "オークの棍棒", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "A giant club used by an orc", "icon": 732}, {"id": 91, "en": "Spiked Club", "jp": "トゲつき棍棒", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "A giant spiked club used by an orc", "icon": 733}, {"id": 92, "en": "Troll Club", "jp": "トロルの棍棒", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "A giant club used by a troll", "icon": 734}, {"id": 94, "en": "Greater Giant Frog (Unused)", "jp": "【未】グレータージャイアントフロッグ", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "(no description)", "icon": 735}, {"id": 95, "en": "Demon-Subduing Holy Sword (Unused)", "jp": "【未】降魔の聖剣", "section": "Ruti-exclusive — greatswords / axes / hammers / scythes (`------ルーティ-------`)", "desc": "The legendary hero's sword", "icon": 719}, {"id": 102, "en": "Practice Scimitar", "jp": "練習用ショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Simply-made, for practice (= Item ID 1102)", "icon": 736}, {"id": 104, "en": "Stone Scimitar", "jp": "石のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "A scimitar with a stone blade (= Item ID 1104)", "icon": 737}, {"id": 105, "en": "Copper Scimitar", "jp": "銅のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Ordinary, easy to handle", "icon": 738}, {"id": 106, "en": "Iron Scimitar", "jp": "アイアンショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Made of iron, sharply edged", "icon": 739}, {"id": 107, "en": "Steel Scimitar", "jp": "鋼のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "A gleaming black blade", "icon": 740}, {"id": 108, "en": "Silver Scimitar", "jp": "銀のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "A scimitar with a silver blade", "icon": 741}, {"id": 109, "en": "Crimson Steel Scimitar", "jp": "紅鋼のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Powerful, uses crimson-smelted steel", "icon": 743}, {"id": 110, "en": "Mithril Silver Scimitar", "jp": "ミスリル銀のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Very sturdy, rare mithril silver", "icon": 744}, {"id": 111, "en": "Orichalcum Scimitar", "jp": "オリハルコンのショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Made from the legendary ore", "icon": 745}, {"id": 113, "en": "Bandit's Scimitar", "jp": "盗賊のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Suited for light, quick movement", "icon": 747}, {"id": 114, "en": "Brigand's Scimitar", "jp": "山賊のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "A heavier blade increases destructive power", "icon": 748}, {"id": 115, "en": "Assassin's Scimitar", "jp": "暗殺者のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Pursues even greater speed and sharpness", "icon": 749}, {"id": 116, "en": "Wild-Edge Scimitar", "jp": "乱れ刃のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Sharp cutting power and high durability", "icon": 750}, {"id": 117, "en": "Blood Scimitar (Unused)", "jp": "【未】ブラッドショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "(no description)", "icon": 751}, {"id": 119, "en": "Magic Scimitar", "jp": "マジックショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Enchanted with a spirit-enhancing spell", "icon": 752}, {"id": 120, "en": "Flame Scimitar", "jp": "焔のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Enchanted with fire magic", "icon": 753}, {"id": 121, "en": "Freezing Scimitar", "jp": "凍結のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Enchanted with freeze magic", "icon": 754}, {"id": 122, "en": "Lightning Scimitar", "jp": "雷のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Enchanted with lightning magic", "icon": 755}, {"id": 123, "en": "Darkness Scimitar", "jp": "暗闇のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Named for robbing the vision of whoever it cuts", "icon": 756}, {"id": 124, "en": "Moonlight Scimitar", "jp": "月光のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "As dazzling as moonlight", "icon": 757}, {"id": 126, "en": "Beast Scimitar", "jp": "獣のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Carved from beast bone", "icon": 759}, {"id": 127, "en": "Dragon Scimitar", "jp": "ドラゴンショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Sharpened using a dragon's fang", "icon": 760}, {"id": 128, "en": "Temptation Scimitar", "jp": "誘惑のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Hypnotic effect, imbued with a succubus's magic power", "icon": 761}, {"id": 129, "en": "Writhing Scimitar", "jp": "うねうねショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Made of writhing tentacles", "icon": 762}, {"id": 130, "en": "Venom Fang Scimitar", "jp": "毒牙のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Carved from a monster's fang", "icon": 763}, {"id": 131, "en": "Evil Scimitar", "jp": "エビルショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Imbued with ominous magic power", "icon": 764}, {"id": 132, "en": "Gale Scimitar (Unused)", "jp": "【未】疾風のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "(no description)", "icon": 765}, {"id": 134, "en": "Ironwood Scimitar", "jp": "アイアンウッドのショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Wooden, yet still sharp", "icon": 768}, {"id": 135, "en": "Bloodwood Scimitar", "jp": "ブラッドウッドのショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Made of Bloodwood — excellent attack and durability", "icon": 769}, {"id": 136, "en": "Scimitar of Life (Unused)", "jp": "【未】生命のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Amplifies the wielder's vitality", "icon": 770}, {"id": 137, "en": "Ancient Tree Scimitar (Unused)", "jp": "【未】古代樹のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Pairs well with spirit magic", "icon": 771}, {"id": 138, "en": "Great Nature Scimitar (Unused)", "jp": "【未】大自然のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Draws much magic power from nature's blessing", "icon": 772}, {"id": 139, "en": "Spirit Scimitar (Unused)", "jp": "【未】精霊のショーテル", "section": "Litt-exclusive — scimitars/shotels (`------リット--------`)", "desc": "Refined magic power that amplifies a spirit's strength", "icon": 773}, {"id": 145, "en": "Wood Bow", "jp": "ウッドボウ", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "A simple wooden bow", "icon": 775}, {"id": 146, "en": "Ironwood Bow", "jp": "アイアンウッドの弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Poor flex but sturdy", "icon": 777}, {"id": 147, "en": "Bloodwood Bow", "jp": "ブラッドウッドの弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Excellent attack and durability", "icon": 778}, {"id": 148, "en": "Livingwood Bow", "jp": "リヴィングウッドの弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Overflowing with vitality — draws out the user's magic power", "icon": 779}, {"id": 149, "en": "Ancient Tree Bow", "jp": "古代樹の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Misshapen, but clad in powerful magic power", "icon": 780}, {"id": 150, "en": "White Horse Tree Bow", "jp": "白馬樹の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Magic-imbued — fires a powerful shot", "icon": 781}, {"id": 151, "en": "Spirit Bow", "jp": "精霊の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Enchanted to draw out a spirit's blessing to the fullest", "icon": 796}, {"id": 153, "en": "Copper Bow", "jp": "銅の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Sturdy but heavy — takes a little time to fire", "icon": 784}, {"id": 154, "en": "Iron Bow", "jp": "鉄の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Sturdy but heavy — takes a little time to fire", "icon": 785}, {"id": 155, "en": "Steel Bow", "jp": "鋼の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Sturdy but heavy — takes a little time to fire", "icon": 786}, {"id": 156, "en": "Silver Bow", "jp": "銀の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Holy, silver-coated — heavy, takes a little time to fire", "icon": 787}, {"id": 157, "en": "Crimson Steel Bow", "jp": "紅鋼の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Sturdy but heavy — takes a little time to fire", "icon": 789}, {"id": 158, "en": "Mithril Silver Bow", "jp": "ミスリル銀の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Sturdy but heavy — takes a little time to fire", "icon": 790}, {"id": 159, "en": "Orichalcum Bow", "jp": "オリハルコンの弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Sturdy but heavy — takes a little time to fire", "icon": 791}, {"id": 161, "en": "Wood Elf Bow (Unused)", "jp": "【未】ウッドエルフの弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Special magic bow, Wood Elf craftsmanship", "icon": 793}, {"id": 162, "en": "High Elf Bow (Unused)", "jp": "【未】ハイエルフの弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Special magic bow, High Elf craftsmanship", "icon": 794}, {"id": 163, "en": "Demon Bow", "jp": "デーモンの弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Imbued with ominous magic power", "icon": 795}, {"id": 165, "en": "Elven Bow (Unused)", "jp": "【未】エルヴンボウ", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Immense magic power passed down through elven generations", "icon": 782}, {"id": 166, "en": "Dragon Cross(bow)", "jp": "ドラゴンクロス", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Said to pierce even hard dragon scales", "icon": 797}, {"id": 167, "en": "Windcutter Bow", "jp": "風切りの弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Very light — fires arrows at high speed", "icon": 798}, {"id": 168, "en": "Sylph Bow", "jp": "シルフボウ", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Blessed by wind spirits — fires arrows at high speed", "icon": 799}, {"id": 170, "en": "Crimson Bow", "jp": "紅の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Enchanted with fire magic", "icon": 800}, {"id": 171, "en": "Bow of Light (Unused)", "jp": "【未】光の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Dazzlingly glowing — fires arrows at high speed", "icon": 802}, {"id": 172, "en": "Demon-Warding Bow", "jp": "退魔の弓", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Seals a monster's magic power", "icon": 803}, {"id": 173, "en": "Luna Shooter", "jp": "ルナシューター", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Shaped like a crescent-moon arc", "icon": 804}, {"id": 174, "en": "Abyss Wing (Unused)", "jp": "【未】アビスウィング", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "(no description)", "icon": 805}, {"id": 175, "en": "Guardian Bow", "jp": "ガーディアンボウ", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Large, destructive — carried by ruin-guarding guardians", "icon": 806}, {"id": 176, "en": "Shooting Star", "jp": "シューティングスター", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "A cool name Otto gave it", "icon": 807}, {"id": 178, "en": "Wood Staff", "jp": "ウッドスタッフ", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "For melee attacks", "icon": 809}, {"id": 179, "en": "Ironwood Staff", "jp": "アイアンウッドの杖", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Sturdy, for melee attacks", "icon": 810}, {"id": 180, "en": "Bloodwood Staff", "jp": "ブラッドウッドの杖", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Made from deep-crimson wood", "icon": 811}, {"id": 181, "en": "Livingwood Staff", "jp": "リヴィングウッドの杖", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Made from wood overflowing with vitality", "icon": 812}, {"id": 182, "en": "Ancient Tree Staff", "jp": "古代樹の杖", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Clad in powerful magic power", "icon": 813}, {"id": 183, "en": "White Horse Tree Staff", "jp": "白馬樹の杖", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Magic-imbued", "icon": 814}, {"id": 184, "en": "Spirit Staff", "jp": "精霊の杖", "section": "Yarandrala-exclusive — bows / staves (`----ヤランドララ------`)", "desc": "Enchanted with a spirit's magic power", "icon": 815}, {"id": 189, "en": "Wooden Knife", "jp": "木のナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "A wooden toy knife", "icon": 1200}, {"id": 190, "en": "Stone Dagger", "jp": "石のダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "A makeshift knife carved from stone", "icon": 1201}, {"id": 191, "en": "Bronze Dagger", "jp": "ブロンズダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Made of copper", "icon": 1202}, {"id": 192, "en": "Dagger", "jp": "ダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "An ordinary metal dagger", "icon": 1203}, {"id": 193, "en": "Steel Dagger", "jp": "スチールダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "A weighty steel dagger", "icon": 1204}, {"id": 194, "en": "Silver Dagger", "jp": "シルバーダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "A holy dagger with a silver blade", "icon": 1205}, {"id": 195, "en": "Crimson Steel Dagger", "jp": "紅鋼の短剣", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Sharp, uses crimson-smelted steel", "icon": 1207}, {"id": 196, "en": "Mithril Silver Dagger", "jp": "ミスリル銀のダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Blade of rare mithril silver", "icon": 1208}, {"id": 197, "en": "Orichalcum Dagger", "jp": "オリハルコンダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Made from the legendary ore", "icon": 1209}, {"id": 199, "en": "Bandit's Knife", "jp": "盗賊のナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Favored by bandits", "icon": 1211}, {"id": 200, "en": "Assassin's Knife", "jp": "暗殺者のナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Favored by assassins", "icon": 1212}, {"id": 201, "en": "Blood-Soaked Dagger (Unused)", "jp": "【未】血濡れのダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Stained red with the blood of many", "icon": 1213}, {"id": 203, "en": "Magic Knife", "jp": "魔法のナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Imbued with a simple sharpening spell", "icon": 1216}, {"id": 204, "en": "Flame Dagger", "jp": "炎の短剣", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Enchanted with fire magic", "icon": 1217}, {"id": 205, "en": "Ice Dagger", "jp": "氷の短剣", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Enchanted with freeze magic", "icon": 1218}, {"id": 206, "en": "Lightning Dagger", "jp": "雷の短剣", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Imbued with lightning by magic", "icon": 1219}, {"id": 207, "en": "Cursed Dagger", "jp": "呪いのダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Imbued with ominous magic power", "icon": 1220}, {"id": 208, "en": "Holy Dagger", "jp": "聖なるダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Imbued with holy power", "icon": 1221}, {"id": 210, "en": "Beast Knife", "jp": "獣のナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Carved from a beast's fang", "icon": 1223}, {"id": 211, "en": "Dragon Knife", "jp": "ドラゴンナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Carved from a dragon's fang", "icon": 1224}, {"id": 212, "en": "Enchanting Dagger", "jp": "魅惑の短剣", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Imbued with strong magic power", "icon": 1225}, {"id": 213, "en": "Venom Fang Dagger", "jp": "毒牙のダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Blade coated in powerful poison", "icon": 1226}, {"id": 214, "en": "Darkness Dagger", "jp": "暗闇のダガー", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Assassin-suited — robs the target's vision", "icon": 1227}, {"id": 215, "en": "Windcutter Knife", "jp": "風切りのナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Enchanted with agility magic for fast attacks", "icon": 1228}, {"id": 217, "en": "Glass Knife", "jp": "ガラスのナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Made of glass. Brittle", "icon": 1230}, {"id": 218, "en": "Crystal Knife", "jp": "クリスタルナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "A broken-crystal blade tip", "icon": 1231}, {"id": 219, "en": "Survival Knife (Unused)", "jp": "【未】サバイバルナイフ", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "Metal, specialized for survival in any environment", "icon": 1232}, {"id": 221, "en": "Kunai (Unused)", "jp": "【未】くない", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "An Eastern weapon, excels at melee and throwing", "icon": 1233}, {"id": 222, "en": "Oden Skewer (Unused)", "jp": "【未】おでん串", "section": "Tise-exclusive — knives / daggers (`----ティセ-----`)", "desc": "A skewer left over from eating oden", "icon": 1234}, {"id": 227, "en": "Bargain Sword", "jp": "お得な剣", "section": "Cheap mass-produced goods — Big Hawk's disposables (`-----粗製乱造品------`)", "desc": "A disposable sword devised by Big Hawk", "icon": 1240}, {"id": 228, "en": "Bargain Greatsword", "jp": "お得な大剣", "section": "Cheap mass-produced goods — Big Hawk's disposables (`-----粗製乱造品------`)", "desc": "A disposable greatsword devised by Big Hawk", "icon": 1241}, {"id": 229, "en": "Bargain Axe", "jp": "お得な斧", "section": "Cheap mass-produced goods — Big Hawk's disposables (`-----粗製乱造品------`)", "desc": "A disposable axe devised by Big Hawk", "icon": 1242}, {"id": 230, "en": "Bargain Scimitar", "jp": "お得なショーテル", "section": "Cheap mass-produced goods — Big Hawk's disposables (`-----粗製乱造品------`)", "desc": "A disposable scimitar devised by Big Hawk", "icon": 1243}, {"id": 231, "en": "Bargain Bow", "jp": "お得な弓", "section": "Cheap mass-produced goods — Big Hawk's disposables (`-----粗製乱造品------`)", "desc": "A disposable bow devised by Big Hawk", "icon": 1244}, {"id": 232, "en": "Bargain Staff", "jp": "お得な杖", "section": "Cheap mass-produced goods — Big Hawk's disposables (`-----粗製乱造品------`)", "desc": "A disposable staff devised by Big Hawk", "icon": 1245}], "Armors": [{"id": 3, "en": "Adventurer's Clothes", "jp": "冒険者の服", "section": "Clothing / Body armor (`---服---`)", "desc": "Easy to move in, sturdy", "icon": 832}, {"id": 4, "en": "Traveler's Cloak", "jp": "旅人のクローク", "section": "Clothing / Body armor (`---服---`)", "desc": "Highly durable, suited for long journeys", "icon": 833}, {"id": 5, "en": "Adventurer's Coat", "jp": "冒険者のコート", "section": "Clothing / Body armor (`---服---`)", "desc": "Favored by many ordinary adventurers", "icon": 834}, {"id": 6, "en": "Intermediate Adventurer's Coat", "jp": "中級冒険者のコート", "section": "Clothing / Body armor (`---服---`)", "desc": "Standard coat for adventurers used to adventuring", "icon": 835}, {"id": 7, "en": "Veteran Adventurer's Coat", "jp": "ベテラン冒険者のコート", "section": "Clothing / Body armor (`---服---`)", "desc": "Can withstand any harsh adventure", "icon": 836}, {"id": 8, "en": "Fur Coat", "jp": "毛皮のコート", "section": "Clothing / Body armor (`---服---`)", "desc": "Warm-looking, high-grade fur", "icon": 837}, {"id": 9, "en": "Fire Rat Poncho", "jp": "火鼠のポンチョ", "section": "Clothing / Body armor (`---服---`)", "desc": "Luxury poncho, highly fire-resistant Fire Rat hide", "icon": 838}, {"id": 10, "en": "Chainmail", "jp": "チェインメイル", "section": "Clothing / Body armor (`---服---`)", "desc": "Lightweight, made sturdy by woven iron", "icon": 839}, {"id": 12, "en": "Bandit Hood (Red) (Unused)", "jp": "【未】盗賊フード(赤)", "section": "Clothing / Body armor (`---服---`)", "desc": "A simple hood worn by bandits", "icon": 841}, {"id": 13, "en": "Bandit Hood (Purple) (Unused)", "jp": "【未】盗賊フード(紫)", "section": "Clothing / Body armor (`---服---`)", "desc": "A simple hood worn by bandits", "icon": 842}, {"id": 15, "en": "Leather Armor", "jp": "皮の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Thick, made of beast hide", "icon": 848}, {"id": 16, "en": "Copper Armor", "jp": "銅の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Simple, made of copper", "icon": 850}, {"id": 17, "en": "Iron Armor", "jp": "鉄の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Favored by ordinary soldiers", "icon": 851}, {"id": 18, "en": "Steel Cuirass", "jp": "鋼の胸甲", "section": "Clothing / Body armor (`---服---`)", "desc": "Quite sturdier than iron", "icon": 852}, {"id": 19, "en": "Crimson Steel Armor", "jp": "紅鋼の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Very sturdy, crimson-smelted steel", "icon": 853}, {"id": 20, "en": "Silver-White Cuirass", "jp": "白銀の胸甲", "section": "Clothing / Body armor (`---服---`)", "desc": "Gleaming mithril silver — resistant to all attacks", "icon": 854}, {"id": 21, "en": "Orichalcum Cuirass", "jp": "オリハルコンの胸甲", "section": "Clothing / Body armor (`---服---`)", "desc": "Defense and durability beyond compare", "icon": 855}, {"id": 23, "en": "Knight Order Armor", "jp": "騎士団の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Very heavy-duty, used by the Bahamut Knight Order", "icon": 857}, {"id": 24, "en": "Knight Commander's Armor", "jp": "騎士団長の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Wearable only by high-ranking knights", "icon": 858}, {"id": 25, "en": "Magic Mail", "jp": "マジックメイル", "section": "Clothing / Body armor (`---服---`)", "desc": "Enchanted with damage-reduction magic", "icon": 859}, {"id": 26, "en": "White Mail", "jp": "ホワイトメイル", "section": "Clothing / Body armor (`---服---`)", "desc": "Magic-conductive alloy — powerful attack resistance", "icon": 860}, {"id": 27, "en": "Azure Sky Armor (Unused)", "jp": "【未】蒼天の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Blue-glowing, crafted from magic-imbued crystal", "icon": 861}, {"id": 28, "en": "Full Plate", "jp": "フルプレート", "section": "Clothing / Body armor (`---服---`)", "desc": "Covers the whole body in hard iron — sturdy but slows movement", "icon": 862}, {"id": 30, "en": "Goblin Clothes", "jp": "ゴブリンの服", "section": "Clothing / Body armor (`---服---`)", "desc": "Made from tanned monster hide", "icon": 844}, {"id": 31, "en": "Giant-kin Clothes", "jp": "巨人族の服", "section": "Clothing / Body armor (`---服---`)", "desc": "Made from tanned giant hide", "icon": 845}, {"id": 32, "en": "Lizard Armor", "jp": "リザードアーマー", "section": "Clothing / Body armor (`---服---`)", "desc": "Sturdy, made from lizard scales", "icon": 846}, {"id": 33, "en": "Wyrm Armor", "jp": "蛮竜の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Thick dragon scales joined together", "icon": 864}, {"id": 34, "en": "Ancient Dragon Armor", "jp": "古代竜の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Higher-magic dragon scales joined together", "icon": 865}, {"id": 35, "en": "Insect Mail", "jp": "インセクトメイル", "section": "Clothing / Body armor (`---服---`)", "desc": "Crafted from a monster's carapace", "icon": 867}, {"id": 36, "en": "Scale Armor", "jp": "鱗の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Woven from a monster's scales", "icon": 868}, {"id": 37, "en": "Golem Armor", "jp": "ゴーレムの鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Made of Golem Stone — sturdy but slows movement", "icon": 869}, {"id": 38, "en": "Living Armor (Unused)", "jp": "【未】リビングアーマー", "section": "Clothing / Body armor (`---服---`)", "desc": "Notorious — said to move on its own at night", "icon": 870}, {"id": 40, "en": "Demon Wing (cloak)", "jp": "デーモンの翼", "section": "Clothing / Body armor (`---服---`)", "desc": "A cloak modeled after a demon's wings", "icon": 872}, {"id": 41, "en": "Angel Feather", "jp": "天使の羽", "section": "Clothing / Body armor (`---服---`)", "desc": "Dazzling and light — enchanted with agility magic", "icon": 873}, {"id": 42, "en": "Devil's Wing", "jp": "悪魔の翼", "section": "Clothing / Body armor (`---服---`)", "desc": "Jet-black cloak, also called devil's wings", "icon": 874}, {"id": 43, "en": "Bandit's Cloak", "jp": "盗賊のマント", "section": "Clothing / Body armor (`---服---`)", "desc": "Suited for quick movement — move-speed magic", "icon": 876}, {"id": 44, "en": "Gale Cloak", "jp": "疾風のマント", "section": "Clothing / Body armor (`---服---`)", "desc": "Improved for even nimbler combat movement", "icon": 877}, {"id": 46, "en": "Cloak of Disguise", "jp": "クロークオブディスガイズ", "section": "Clothing / Body armor (`---服---`)", "desc": "Suited for hiding yourself from others", "icon": 880}, {"id": 47, "en": "Magic Coat", "jp": "マジックコート", "section": "Clothing / Body armor (`---服---`)", "desc": "Draws out the wearer's magic power", "icon": 881}, {"id": 48, "en": "Flame Coat", "jp": "フレイムコート", "section": "Clothing / Body armor (`---服---`)", "desc": "Favored by fire-mages — attack-boost magic", "icon": 882}, {"id": 49, "en": "Crimson Flame Coat", "jp": "紅蓮のコート", "section": "Clothing / Body armor (`---服---`)", "desc": "Modeled after burning crimson flame, denser magic", "icon": 883}, {"id": 50, "en": "Coat of Light (Unused)", "jp": "【未】光のコート", "section": "Clothing / Body armor (`---服---`)", "desc": "(no description)", "icon": 884}, {"id": 51, "en": "Evasion Coat", "jp": "身かわしのコート", "section": "Clothing / Body armor (`---服---`)", "desc": "Raises agility — easier to dodge attacks", "icon": 885}, {"id": 52, "en": "Dark Cloak", "jp": "ダーククローク", "section": "Clothing / Body armor (`---服---`)", "desc": "Blends with darkness — suited for stealth", "icon": 886}, {"id": 53, "en": "Shield Cloak", "jp": "シールドクローク", "section": "Clothing / Body armor (`---服---`)", "desc": "High defense with environmental resistance", "icon": 887}, {"id": 55, "en": "Herb Shop Apron", "jp": "薬草店のエプロン", "section": "Clothing / Body armor (`---服---`)", "desc": "Stylish, suited for business", "icon": 889}, {"id": 56, "en": "Veteran Apron", "jp": "ベテランエプロン", "section": "Clothing / Body armor (`---服---`)", "desc": "Legendary — craftable only by shop-running masters", "icon": 890}, {"id": 58, "en": "Robe of the Earth", "jp": "大地の衣", "section": "Clothing / Body armor (`---服---`)", "desc": "Vestments carrying the earth spirits' blessing", "icon": 892}, {"id": 59, "en": "Fairy Clothes", "jp": "妖精の服", "section": "Clothing / Body armor (`---服---`)", "desc": "Fairy clothes resized for humans", "icon": 893}, {"id": 60, "en": "Elf Clothes", "jp": "エルフの服", "section": "Clothing / Body armor (`---服---`)", "desc": "Made from elven holy dew thread", "icon": 894}, {"id": 61, "en": "Angel's Vestments (Unused)", "jp": "【未】天使の法衣", "section": "Clothing / Body armor (`---服---`)", "desc": "Magic woven into every thread — high attack resistance", "icon": 895}, {"id": 63, "en": "Robe", "jp": "ローブ", "section": "Clothing / Body armor (`---服---`)", "desc": "An ordinary robe favored by magic classes", "icon": 896}, {"id": 64, "en": "Sorcerer's Robe", "jp": "術士のローブ", "section": "Clothing / Body armor (`---服---`)", "desc": "Boosts spellcasting effects", "icon": 897}, {"id": 65, "en": "Elf Robe", "jp": "エルフのローブ", "section": "Clothing / Body armor (`---服---`)", "desc": "Magic-imbued, passed down among elves", "icon": 898}, {"id": 66, "en": "Singer's Robe", "jp": "歌い手のローブ", "section": "Clothing / Body armor (`---服---`)", "desc": "Denser magic, specialized for spirit summoning", "icon": 899}, {"id": 67, "en": "Magic Robe", "jp": "マジックローブ", "section": "Clothing / Body armor (`---服---`)", "desc": "Draws out the wearer's magic power", "icon": 900}, {"id": 69, "en": "Dragon Robe", "jp": "ドラゴンローブ", "section": "Clothing / Body armor (`---服---`)", "desc": "Wearing a dragon's breath mitigates all attacks", "icon": 902}, {"id": 70, "en": "Robe of Protection", "jp": "守護のローブ", "section": "Clothing / Body armor (`---服---`)", "desc": "Dense magic power, resistant to all attacks", "icon": 903}, {"id": 71, "en": "Sage's Robe", "jp": "智者のローブ", "section": "Clothing / Body armor (`---服---`)", "desc": "Used by an ancient sage — boosts all abilities", "icon": 904}, {"id": 72, "en": "Jet-Black Robe", "jp": "漆黒のローブ", "section": "Clothing / Body armor (`---服---`)", "desc": "Dyed jet-black", "icon": 905}, {"id": 75, "en": "Red's Clothes", "jp": "レッドの服", "section": "Clothing / Body armor (`---服---`)", "desc": "Navy-blue, suits Red well", "icon": 907}, {"id": 76, "en": "Litt's Clothes", "jp": "リットの服", "section": "Clothing / Body armor (`---服---`)", "desc": "Fondly worn since her adventurer days", "icon": 908}, {"id": 77, "en": "Ruti's Clothes", "jp": "ルーティの服", "section": "Clothing / Body armor (`---服---`)", "desc": "Matches Zoltan's local style", "icon": 909}, {"id": 78, "en": "(Yarandrala slot)", "jp": "(ヤランドララ枠)", "section": "Clothing / Body armor (`---服---`)", "desc": "Placeholder outfit slot, no description", "icon": 0}, {"id": 79, "en": "(Tise slot)", "jp": "(ティセ枠)", "section": "Clothing / Body armor (`---服---`)", "desc": "Placeholder outfit slot, no description", "icon": 0}, {"id": 81, "en": "Silver-White Armor (Unused)", "jp": "【未】白銀の鎧", "section": "Clothing / Body armor (`---服---`)", "desc": "Gleaming white hero's armor — resistant to all attacks", "icon": 0}, {"id": 82, "en": "Elf's Purification Robe (Unused)", "jp": "【未】エルフの浄衣", "section": "Clothing / Body armor (`---服---`)", "desc": "Sacred vestments only a chosen elf may wear", "icon": 0}, {"id": 83, "en": "Assassin's Clothes (Unused)", "jp": "【未】暗殺者の服", "section": "Clothing / Body armor (`---服---`)", "desc": "Fitted with hidden weapons, specialized for assassination", "icon": 0}, {"id": 89, "en": "Leather Boots", "jp": "革のブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Ordinary shoes made of leather", "icon": 912}, {"id": 90, "en": "Adventurer's Shoes", "jp": "冒険者の靴", "section": "Shoes (`--------靴----------`)", "desc": "Handle mountain trails without trouble", "icon": 913}, {"id": 91, "en": "Intermediate Adventurer's Shoes", "jp": "中級冒険者の靴", "section": "Shoes (`--------靴----------`)", "desc": "Standard shoes for experienced adventurers", "icon": 914}, {"id": 92, "en": "Veteran Adventurer's Shoes", "jp": "ベテラン冒険者の靴", "section": "Shoes (`--------靴----------`)", "desc": "Withstand any harsh adventure", "icon": 915}, {"id": 93, "en": "Tropical Sandals", "jp": "南国サンダル", "section": "Shoes (`--------靴----------`)", "desc": "Evoke Zoltan's local flavor", "icon": 916}, {"id": 94, "en": "Grass Sandals", "jp": "草のサンダル", "section": "Shoes (`--------靴----------`)", "desc": "Suited to a tropical style", "icon": 917}, {"id": 95, "en": "Forest-Folk Shoes", "jp": "森人の靴", "section": "Shoes (`--------靴----------`)", "desc": "Woven from higher-quality grasses/flowers", "icon": 918}, {"id": 96, "en": "Earth Shoes", "jp": "大地の靴", "section": "Shoes (`--------靴----------`)", "desc": "Woven from plants — feel the earth's power", "icon": 919}, {"id": 97, "en": "Fairy Shoes", "jp": "妖精の靴", "section": "Shoes (`--------靴----------`)", "desc": "Fairy shoes resized for humans", "icon": 920}, {"id": 98, "en": "Elf Shoes", "jp": "エルフの靴", "section": "Shoes (`--------靴----------`)", "desc": "Magic-imbued, passed down among elves", "icon": 921}, {"id": 100, "en": "Slime Boots", "jp": "スライムブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Sticky, gross-feeling", "icon": 922}, {"id": 101, "en": "Marine Boots", "jp": "マリンブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Feel cool and chilly", "icon": 923}, {"id": 102, "en": "Magma Boots", "jp": "マグマブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Carry a faint warmth", "icon": 924}, {"id": 103, "en": "Oil Boots", "jp": "オイルブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Jet-black, very sticky", "icon": 925}, {"id": 104, "en": "Snow Boots", "jp": "スノーブーツ", "section": "Shoes (`--------靴----------`)", "desc": "As white as snow", "icon": 926}, {"id": 105, "en": "Magical Boots", "jp": "マジカルブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Blended from various slime mucus", "icon": 927}, {"id": 107, "en": "Frog Webbing (shoes)", "jp": "カエルの水かき", "section": "Shoes (`--------靴----------`)", "desc": "Cute shoes modeled after webbed feet", "icon": 928}, {"id": 108, "en": "Sharkskin Shoes", "jp": "サメ皮の靴", "section": "Shoes (`--------靴----------`)", "desc": "Rich-looking, made of shark skin", "icon": 929}, {"id": 109, "en": "Scorpion Shoes", "jp": "サソリの靴", "section": "Shoes (`--------靴----------`)", "desc": "Scorpion carapace — excellent durability/defense", "icon": 930}, {"id": 110, "en": "Fenrir Shoes", "jp": "フェンリルの靴", "section": "Shoes (`--------靴----------`)", "desc": "Cute, modeled after a Fenrir's front paws", "icon": 931}, {"id": 111, "en": "Dragon Leg (shoes)", "jp": "竜の脚", "section": "Shoes (`--------靴----------`)", "desc": "Sturdy, uses dragon scales", "icon": 932}, {"id": 112, "en": "Beast Hide Shoes", "jp": "獣皮の靴", "section": "Shoes (`--------靴----------`)", "desc": "Reasonably sturdy", "icon": 933}, {"id": 113, "en": "Goblin Shoes", "jp": "ゴブリンシューズ", "section": "Shoes (`--------靴----------`)", "desc": "Still smell of goblin", "icon": 934}, {"id": 114, "en": "Orc Shoes", "jp": "オークの靴", "section": "Shoes (`--------靴----------`)", "desc": "Recycled from orc materials", "icon": 935}, {"id": 115, "en": "High Orc Shoes", "jp": "ハイオークの靴", "section": "Shoes (`--------靴----------`)", "desc": "Orc shoes made even sturdier", "icon": 936}, {"id": 116, "en": "Troll Shoes", "jp": "トロルの靴", "section": "Shoes (`--------靴----------`)", "desc": "Recycled from troll leather", "icon": 937}, {"id": 117, "en": "Giant-kin Shoes", "jp": "巨人族の靴", "section": "Shoes (`--------靴----------`)", "desc": "Troll shoes made even sturdier", "icon": 938}, {"id": 118, "en": "Chimera Shoes", "jp": "キマイラの靴", "section": "Shoes (`--------靴----------`)", "desc": "Sharp, modeled after a chimera's front paws", "icon": 940}, {"id": 119, "en": "Demon Shoes", "jp": "デーモンシューズ", "section": "Shoes (`--------靴----------`)", "desc": "Sturdy, but cursed — lowers movement speed", "icon": 941}, {"id": 120, "en": "Devil's Shoes", "jp": "悪魔の靴", "section": "Shoes (`--------靴----------`)", "desc": "Cool devil-motif shoes", "icon": 942}, {"id": 121, "en": "Angel Shoes", "jp": "天使の靴", "section": "Shoes (`--------靴----------`)", "desc": "Light, cute feather decoration", "icon": 943}, {"id": 123, "en": "Copper Greaves", "jp": "銅のグリーブ", "section": "Shoes (`--------靴----------`)", "desc": "Sturdy copper leg armor", "icon": 944}, {"id": 124, "en": "Iron Greaves", "jp": "鉄のグリーブ", "section": "Shoes (`--------靴----------`)", "desc": "Sturdy iron leg armor", "icon": 945}, {"id": 125, "en": "Steel Greaves", "jp": "鋼のグリーブ", "section": "Shoes (`--------靴----------`)", "desc": "Highly refined steel", "icon": 946}, {"id": 126, "en": "Crimson Steel Greaves", "jp": "紅鋼のグリーブ", "section": "Shoes (`--------靴----------`)", "desc": "Very sturdy, crimson-smelted steel", "icon": 947}, {"id": 127, "en": "Mithril Silver Boots", "jp": "ミスリル銀のブーツ", "section": "Shoes (`--------靴----------`)", "desc": "High defense, excellent durability", "icon": 948}, {"id": 128, "en": "Orichalcum Boots", "jp": "オリハルコンブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Resistant to all attacks", "icon": 949}, {"id": 129, "en": "Warrior's Greaves", "jp": "戦士のグリーブ", "section": "Shoes (`--------靴----------`)", "desc": "Favored by valiant warriors", "icon": 951}, {"id": 130, "en": "Knight's Greaves", "jp": "騎士のグリーブ", "section": "Shoes (`--------靴----------`)", "desc": "Worn by ordinary knights", "icon": 952}, {"id": 131, "en": "Senior Knight's Greaves", "jp": "上級騎士のグリーブ", "section": "Shoes (`--------靴----------`)", "desc": "Worn by well-trained knights", "icon": 953}, {"id": 133, "en": "Assassin Boots", "jp": "アサシンブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Suited for stealth — raises agility", "icon": 954}, {"id": 134, "en": "Wing Boots", "jp": "ウイングブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Speed as if wings had sprouted", "icon": 955}, {"id": 135, "en": "Farmer Boots", "jp": "ファーマーブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Suited for farming", "icon": 956}, {"id": 136, "en": "Royal Boots", "jp": "ロイヤルブーツ", "section": "Shoes (`--------靴----------`)", "desc": "Magic boots, various support magic", "icon": 957}, {"id": 137, "en": "Runner-Dragon Shoes", "jp": "走竜の靴", "section": "Shoes (`--------靴----------`)", "desc": "Shaped like a runner-dragon's legs", "icon": 958}, {"id": 140, "en": "Leather Gloves", "jp": "革の手袋", "section": "Accessories (`------装飾品--------`)", "desc": "Adventurer's gloves, animal leather", "icon": 960}, {"id": 141, "en": "High-Grade Leather Gloves", "jp": "高級革の手袋", "section": "Accessories (`------装飾品--------`)", "desc": "High-grade fur", "icon": 961}, {"id": 142, "en": "Elf Gloves", "jp": "エルフの手袋", "section": "Accessories (`------装飾品--------`)", "desc": "Protects an elf's beautiful skin", "icon": 962}, {"id": 143, "en": "Farmer Gloves", "jp": "ファーマーグローブ", "section": "Accessories (`------装飾品--------`)", "desc": "Suited for farming", "icon": 963}, {"id": 144, "en": "Blessing Gloves", "jp": "恵みの手袋", "section": "Accessories (`------装飾品--------`)", "desc": "Suited for farming — sturdy, long-lasting", "icon": 964}, {"id": 145, "en": "Master Gloves", "jp": "マスターグローブ", "section": "Accessories (`------装飾品--------`)", "desc": "Legendary — masters of crop harvesting only", "icon": 965}, {"id": 146, "en": "Bandit's Gauntlets", "jp": "盗賊の手甲", "section": "Accessories (`------装飾品--------`)", "desc": "Suited for quick movement", "icon": 967}, {"id": 147, "en": "Assassin's Gauntlets", "jp": "アサシンの手甲", "section": "Accessories (`------装飾品--------`)", "desc": "Favored by assassins", "icon": 968}, {"id": 148, "en": "Knight's Gauntlets", "jp": "騎士の籠手", "section": "Accessories (`------装飾品--------`)", "desc": "Sturdy metal, used by knights", "icon": 969}, {"id": 149, "en": "Steel Gauntlets", "jp": "鋼のガントレット", "section": "Accessories (`------装飾品--------`)", "desc": "Sturdy steel metal", "icon": 970}, {"id": 150, "en": "Crimson Steel Gauntlets", "jp": "紅鋼のガントレット", "section": "Accessories (`------装飾品--------`)", "desc": "Sturdy crimson steel metal", "icon": 971}, {"id": 151, "en": "Golem Gauntlets", "jp": "ゴーレムの籠手", "section": "Accessories (`------装飾品--------`)", "desc": "Golem Stone — sturdiness rivaling metal", "icon": 972}, {"id": 152, "en": "Glass Necklace", "jp": "ガラスの首飾り", "section": "Accessories (`------装飾品--------`)", "desc": "Glass beads strung like a rosary", "icon": 976}, {"id": 153, "en": "Seashell Necklace", "jp": "貝殻の首飾り", "section": "Accessories (`------装飾品--------`)", "desc": "Handmade, decorated with seashells", "icon": 977}, {"id": 154, "en": "Coral Necklace", "jp": "サンゴの首飾り", "section": "Accessories (`------装飾品--------`)", "desc": "Handmade, decorated with coral", "icon": 978}, {"id": 155, "en": "Dragon Necklace", "jp": "竜の首飾り", "section": "Accessories (`------装飾品--------`)", "desc": "Dragon-fang accent — protects from various attacks", "icon": 980}, {"id": 156, "en": "Ancient Dragon Necklace", "jp": "古代竜の首飾り", "section": "Accessories (`------装飾品--------`)", "desc": "Higher-magic fang — protects from various attacks", "icon": 981}, {"id": 157, "en": "Red Scarf", "jp": "赤いスカーフ", "section": "Accessories (`------装飾品--------`)", "desc": "Beautiful red — move-speed magic", "icon": 973}, {"id": 158, "en": "Purple Scarf", "jp": "紫のスカーフ", "section": "Accessories (`------装飾品--------`)", "desc": "Beautiful purple — move-speed magic", "icon": 974}, {"id": 159, "en": "Magic Earring", "jp": "魔法のイヤリング", "section": "Accessories (`------装飾品--------`)", "desc": "Amplifies the wearer's magic power", "icon": 991}, {"id": 160, "en": "Spirit-User's Earring", "jp": "精霊使いのイヤリング", "section": "Accessories (`------装飾品--------`)", "desc": "Makes it easier to hear a spirit's voice", "icon": 986}, {"id": 161, "en": "Feather Earring", "jp": "羽根のイヤリング", "section": "Accessories (`------装飾品--------`)", "desc": "Cute, with a bird feather", "icon": 984}, {"id": 162, "en": "Blazing Feather Earring", "jp": "燃えさかる羽根のイヤリング", "section": "Accessories (`------装飾品--------`)", "desc": "Flame sealed inside, forever flickering", "icon": 985}, {"id": 163, "en": "Black Crystal Earring", "jp": "黒水晶のイヤリング", "section": "Accessories (`------装飾品--------`)", "desc": "Beautiful black-and-silver contrast", "icon": 988}, {"id": 164, "en": "Crystal Earring", "jp": "水晶のイヤリング", "section": "Accessories (`------装飾品--------`)", "desc": "A beautifully shining crystal", "icon": 989}, {"id": 165, "en": "Friendship Bracelet", "jp": "ミサンガ", "section": "Accessories (`------装飾品--------`)", "desc": "Said to grant a wish when it breaks", "icon": 992}, {"id": 166, "en": "Flower Bracelet", "jp": "花のブレスレット", "section": "Accessories (`------装飾品--------`)", "desc": "Woven from flowers", "icon": 993}, {"id": 167, "en": "Earth Bracelet", "jp": "大地のブレスレット", "section": "Accessories (`------装飾品--------`)", "desc": "Grants the earth's blessing", "icon": 994}, {"id": 168, "en": "Fairy Bracelet", "jp": "妖精のブレスレット", "section": "Accessories (`------装飾品--------`)", "desc": "A fairy doodle on the underside", "icon": 995}, {"id": 170, "en": "Copper Bangle", "jp": "銅の腕輪", "section": "Accessories (`------装飾品--------`)", "desc": "Stylish copper bangle", "icon": 997}, {"id": 171, "en": "Iron Bangle", "jp": "鉄の腕輪", "section": "Accessories (`------装飾品--------`)", "desc": "Stylish iron bangle", "icon": 998}, {"id": 172, "en": "Silver Bracelet", "jp": "銀のブレスレット", "section": "Accessories (`------装飾品--------`)", "desc": "Luxurious-feeling silver", "icon": 999}, {"id": 173, "en": "Gold Bracelet", "jp": "金のブレスレット", "section": "Accessories (`------装飾品--------`)", "desc": "Luxurious-feeling gold", "icon": 1000}, {"id": 174, "en": "Mithril Silver Bracelet", "jp": "ミスリル銀のブレスレット", "section": "Accessories (`------装飾品--------`)", "desc": "Exquisitely crafted", "icon": 1001}, {"id": 176, "en": "Amber Bracelet", "jp": "琥珀のブレスレット", "section": "Accessories (`------装飾品--------`)", "desc": "Caramel-colored amber", "icon": 1003}, {"id": 177, "en": "Jade Bracelet", "jp": "翡翠のブレスレット", "section": "Accessories (`------装飾品--------`)", "desc": "Beautifully polished jade", "icon": 1004}, {"id": 178, "en": "Giant's Bangle", "jp": "巨人の腕輪", "section": "Accessories (`------装飾品--------`)", "desc": "Fills you with strength just by wearing it", "icon": 1005}, {"id": 179, "en": "Demon-kin's Bangle", "jp": "魔人の腕輪", "section": "Accessories (`------装飾品--------`)", "desc": "Fills you with strength just by wearing it", "icon": 1006}, {"id": 181, "en": "Wood-Carved Ring", "jp": "木彫りの指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Handmade by a Zoltan craftsman", "icon": 1008}, {"id": 182, "en": "Silver Ring", "jp": "シルバーリング", "section": "Accessories (`------装飾品--------`)", "desc": "Luxurious-feeling silver", "icon": 1009}, {"id": 183, "en": "Gold Ring", "jp": "金の指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Base material for various other rings", "icon": 1010}, {"id": 184, "en": "Magic Ring", "jp": "マジックリング", "section": "Accessories (`------装飾品--------`)", "desc": "Magic power flows inside — boosts abilities", "icon": 1013}, {"id": 185, "en": "Flame Ring", "jp": "フレイムリング", "section": "Accessories (`------装飾品--------`)", "desc": "Burning red — greatly boosts abilities", "icon": 1014}, {"id": 186, "en": "Beast Ring", "jp": "ビーストリング", "section": "Accessories (`------装飾品--------`)", "desc": "Shaped like a beast", "icon": 1015}, {"id": 187, "en": "Ring of Repose (Unused)", "jp": "【未】鎮魂の指輪", "section": "Accessories (`------装飾品--------`)", "desc": "A charm worn when fighting undead-type monsters", "icon": 1016}, {"id": 188, "en": "Slime Ring", "jp": "スライムリング", "section": "Accessories (`------装飾品--------`)", "desc": "A slime's core — hard to make, easy to repair", "icon": 1017}, {"id": 189, "en": "Ring of the Fiendish", "jp": "魔性の指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Protects from mind-control magic", "icon": 1018}, {"id": 190, "en": "Devil Ring (Unused)", "jp": "【未】デビルリング", "section": "Accessories (`------装飾品--------`)", "desc": "Cool, designed with devil wings", "icon": 1019}, {"id": 191, "en": "Angel Ring (Unused)", "jp": "【未】エンジェルリング", "section": "Accessories (`------装飾品--------`)", "desc": "Angel-wing shaped — skill support too", "icon": 1020}, {"id": 192, "en": "Fairy Ring", "jp": "妖精の指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Cute wing symbol, modeled after a fairy", "icon": 1021}, {"id": 193, "en": "Force Ring", "jp": "フォースリング", "section": "Accessories (`------装飾品--------`)", "desc": "Fragile yet powerful, densely-kneaded magic", "icon": 1022}, {"id": 194, "en": "Ring of Life (Unused)", "jp": "【未】命の指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Mysteriously fills you with vitality", "icon": 1025}, {"id": 195, "en": "Ring of Satiety (Unused)", "jp": "【未】飽食の指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Makes you less prone to hunger", "icon": 1026}, {"id": 196, "en": "Winning-Steed Ring (Unused)", "jp": "【未】勝馬の指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Runner-dragon race prize — everyone's dream ring", "icon": 1027}, {"id": 197, "en": "Mithril Silver Ring", "jp": "ミスリル銀の指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Rare ore — high equipment value too", "icon": 1029}, {"id": 198, "en": "Ring of Mental Defense", "jp": "精神防御の指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Excellent defense from various interference", "icon": 1030}, {"id": 200, "en": "Ruby Ring", "jp": "ルビーの指輪", "section": "Accessories (`------装飾品--------`)", "desc": "A glittering red gem", "icon": 1032}, {"id": 201, "en": "Topaz Ring", "jp": "トパーズの指輪", "section": "Accessories (`------装飾品--------`)", "desc": "A glittering yellow gem", "icon": 1033}, {"id": 202, "en": "Amber Ring", "jp": "コハクの指輪", "section": "Accessories (`------装飾品--------`)", "desc": "A glittering orange gem", "icon": 1034}, {"id": 203, "en": "Emerald Ring", "jp": "エメラルドの指輪", "section": "Accessories (`------装飾品--------`)", "desc": "A glittering green gem", "icon": 1035}, {"id": 204, "en": "Aquamarine Ring", "jp": "アクアマリンの指輪", "section": "Accessories (`------装飾品--------`)", "desc": "A glittering blue gem", "icon": 1036}, {"id": 205, "en": "Amethyst Ring", "jp": "アメジストの指輪", "section": "Accessories (`------装飾品--------`)", "desc": "A glittering purple gem", "icon": 1037}, {"id": 206, "en": "Diamond Ring", "jp": "ダイヤモンドの指輪", "section": "Accessories (`------装飾品--------`)", "desc": "Gleaming white diamond", "icon": 1038}, {"id": 209, "en": "Tanta's Benefactor", "jp": "タンタの恩人", "section": "Titles (`-------称号---------`)", "desc": "Saved Tanta from white-eye disease", "icon": 1152}, {"id": 210, "en": "Pyromancer's Vanquisher", "jp": "火術士討伐者", "section": "Titles (`-------称号---------`)", "desc": "Protected the herb shop from Dill", "icon": 1153}, {"id": 211, "en": "Zoltan-Style Adventurer", "jp": "ゾルタン流の冒険者", "section": "Titles (`-------称号---------`)", "desc": "Protected the Guild from Albert's reforms", "icon": 1154}, {"id": 212, "en": "An Irreplaceable Place", "jp": "かけがえのない場所", "section": "Titles (`-------称号---------`)", "desc": "Protected the herb shop from alchemist Godwin", "icon": 1155}, {"id": 213, "en": "Rescue Success!", "jp": "救出大成功！", "section": "Titles (`-------称号---------`)", "desc": "Rescued Al, held captive by the Thieves' Guild", "icon": 1156}, {"id": 214, "en": "Hero of Zoltan", "jp": "ゾルタンの英雄", "section": "Titles (`-------称号---------`)", "desc": "Saved Zoltan from Big Hawk's evil clutches", "icon": 1157}, {"id": 216, "en": "The True Guide", "jp": "真の導き手", "section": "Titles (`-------称号---------`)", "desc": "Led the hero Ruti to happiness", "icon": 1159}, {"id": 218, "en": "D-Rank Adventurer's Badge (Unused)", "jp": "【未】Dランク冒険者の証", "section": "Titles (`-------称号---------`)", "desc": "Can survive in the wild", "icon": 1162}, {"id": 219, "en": "C-Rank Adventurer's Badge", "jp": "Cランク冒険者の証", "section": "Titles (`-------称号---------`)", "desc": "Can resolve a village crisis", "icon": 1163}, {"id": 220, "en": "B-Rank Adventurer's Badge", "jp": "Bランク冒険者の証", "section": "Titles (`-------称号---------`)", "desc": "Can resolve a town crisis", "icon": 1164}, {"id": 221, "en": "A-Rank Adventurer's Badge", "jp": "Aランク冒険者の証", "section": "Titles (`-------称号---------`)", "desc": "Nation-tier — resolves multiple towns' crises", "icon": 1165}, {"id": 222, "en": "S-Rank Adventurer's Badge", "jp": "Sランク冒険者の証", "section": "Titles (`-------称号---------`)", "desc": "Legendary-tier — resolves continental/world crises", "icon": 1166}, {"id": 224, "en": "Sauna Master", "jp": "サウナマスター", "section": "Titles (`-------称号---------`)", "desc": "Mastered the sauna", "icon": 1168}, {"id": 225, "en": "Fishing Master", "jp": "釣りマスター", "section": "Titles (`-------称号---------`)", "desc": "A regular at the fishing tournament", "icon": 1169}, {"id": 226, "en": "Runner-Dragon Race Champion", "jp": "走竜レースの覇者", "section": "Titles (`-------称号---------`)", "desc": "Mastered the runner-dragon race", "icon": 1170}, {"id": 227, "en": "Arena Champion", "jp": "闘技場の覇者", "section": "Titles (`-------称号---------`)", "desc": "Outstanding record in the arena", "icon": 1171}, {"id": 229, "en": "Quest Novice (Unused)", "jp": "【未】クエスト初心者", "section": "Titles (`-------称号---------`)", "desc": "Resolved your first request", "icon": 1173}, {"id": 230, "en": "Fledgling Adventurer (Unused)", "jp": "【未】駆けだし冒険者", "section": "Titles (`-------称号---------`)", "desc": "Resolved a fair number of requests", "icon": 1174}, {"id": 231, "en": "Savior of the Guild", "jp": "ギルドの救世主", "section": "Titles (`-------称号---------`)", "desc": "Completed many Guild requests", "icon": 1175}, {"id": 232, "en": "Quest Master (Unused)", "jp": "【未】クエストマスター", "section": "Titles (`-------称号---------`)", "desc": "Resolved many townsfolk's troubles", "icon": 1176}, {"id": 234, "en": "World Explorer (Unused)", "jp": "【未】世界の探求者", "section": "Titles (`-------称号---------`)", "desc": "Traveled to various lands around Zoltan", "icon": 1177}, {"id": 236, "en": "Litt's Husband", "jp": "リットの旦那様", "section": "Titles (`-------称号---------`)", "desc": "Maxed bond with Litt", "icon": 1179}, {"id": 237, "en": "Guide of Ruti", "jp": "ルーティを導く者", "section": "Titles (`-------称号---------`)", "desc": "Maxed bond with Ruti", "icon": 1180}, {"id": 238, "en": "Yarandrala's Sibling", "jp": "ヤランドララの姉弟", "section": "Titles (`-------称号---------`)", "desc": "Maxed bond with Yarandrala", "icon": 1181}, {"id": 239, "en": "Tise's Best Friend", "jp": "ティセの親友", "section": "Titles (`-------称号---------`)", "desc": "Maxed bond with Tise", "icon": 1182}, {"id": 240, "en": "Ugeuge-san's Friend", "jp": "うげうげさんの友達", "section": "Titles (`-------称号---------`)", "desc": "Became close with Ugeuge-san", "icon": 1183}, {"id": 242, "en": "Furniture Shop's Poster Child", "jp": "家具屋の広告塔", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Sotosan", "icon": 1184}, {"id": 243, "en": "Carpenter's Right Hand", "jp": "大工の片腕", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Gonz", "icon": 1185}, {"id": 244, "en": "Capable Assistant", "jp": "有能助手", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Newman", "icon": 1186}, {"id": 245, "en": "Keeper of the Tall Tales", "jp": "自慢話を語り継ぐもの", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Moguryumu", "icon": 1187}, {"id": 246, "en": "Sauna Rebuilder", "jp": "サウナ再建者", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Zef", "icon": 1188}, {"id": 247, "en": "Oden Meister", "jp": "おでんマイスター", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Oparala", "icon": 1189}, {"id": 248, "en": "Guard Training Chief", "jp": "衛兵の訓練長", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Captain Morgen", "icon": 1190}, {"id": 249, "en": "Swordmaster's Mentor", "jp": "ソードマスターの師匠", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Al", "icon": 1191}, {"id": 250, "en": "The Great Senior", "jp": "大先輩", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Alice", "icon": 1192}, {"id": 251, "en": "Trade's Best Customer", "jp": "交易のお得意様", "section": "Titles (`-------称号---------`)", "desc": "Major contribution to, recognized by, Captain Blake", "icon": 1193}, {"id": 253, "en": "Best-Selling Herb Shop Badge", "jp": "売れ筋薬草店の証", "section": "Titles (`-------称号---------`)", "desc": "Hit a sales total at the herb shop", "icon": 1195}, {"id": 254, "en": "Famous Herb Shop Badge", "jp": "有名薬草店の証", "section": "Titles (`-------称号---------`)", "desc": "Ran a fine shop, sold herbs to many", "icon": 1196}, {"id": 255, "en": "First-Class Herb Shop Badge", "jp": "一流薬草店の証", "section": "Titles (`-------称号---------`)", "desc": "Massive herb-shop sales", "icon": 1197}, {"id": 256, "en": "World's #1 Herb Shop Badge", "jp": "世界一の薬草店の証", "section": "Titles (`-------称号---------`)", "desc": "Top of the herb shop rankings", "icon": 1198}, {"id": 258, "en": "True Companion", "jp": "真の仲間", "section": "Titles (`-------称号---------`)", "desc": "Never forget the bonds with your companions", "icon": 1199}]};
+
+function spawnId(entry){
+  if(entry.db === 'Weapons') return entry.id + 1000;
+  if(entry.db === 'Armors') return entry.id + 10000;
+  return entry.id;
+}
+
+const ALL = [];
+['Items','Weapons','Armors'].forEach(db=>{
+  (ITEM_DATA[db]||[]).forEach(e=>{
+    ALL.push(Object.assign({db}, e));
+  });
+});
+
+// ---------- toast ----------
+let toastTimer = null;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> el.classList.remove('show'), 1800);
+}
+function copyText(text, label){
+  navigator.clipboard.writeText(text).then(()=>{
+    toast((label || 'Script') + ' copied — paste it into the console');
+  }).catch(()=>{
+    toast('Copy failed — clipboard blocked by browser');
+  });
+}
+
+// ---------- live connect (Chrome DevTools Protocol over the remote-debugging port) ----------
+let cdpSocket = null;
+let cdpConnected = false;
+let cdpReqId = 1;
+const cdpPending = {};
+
+function setConnStatus(state, detail){
+  const el = document.getElementById('connStatus');
+  el.dataset.state = state;
+  const labels = {
+    connecting: 'connecting…',
+    connected: 'live — ' + (detail || 'connected'),
+    unavailable: detail || 'not connected (copy mode)',
+  };
+  el.querySelector('.text').textContent = labels[state] || state;
+}
+
+async function tryLiveConnect(){
+  setConnStatus('connecting');
+  let targets;
+  try {
+    const res = await fetch('http://127.0.0.1:9222/json');
+    targets = await res.json();
+  } catch (err) {
+    setConnStatus('unavailable', 'port unreachable — copy mode');
+    return;
+  }
+  const target = targets.find(t =>
+    t.type === 'page' &&
+    !/generated_background_page/i.test(t.url || '') &&
+    !/generated_background_page/i.test(t.title || '')
+  );
+  if (!target || !target.webSocketDebuggerUrl){
+    setConnStatus('unavailable', 'game tab not found — copy mode');
+    return;
+  }
+  try {
+    const ws = new WebSocket(target.webSocketDebuggerUrl);
+    ws.onopen = () => {
+      cdpSocket = ws;
+      cdpConnected = true;
+      setConnStatus('connected', target.title || 'game');
+    };
+    ws.onclose = () => {
+      cdpConnected = false;
+      cdpSocket = null;
+      setConnStatus('unavailable', 'disconnected — copy mode');
+    };
+    ws.onerror = () => {
+      cdpConnected = false;
+      setConnStatus('unavailable', 'blocked by browser — copy mode');
+    };
+    ws.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch(e){ return; }
+      if (msg.id && cdpPending[msg.id]){
+        cdpPending[msg.id](msg);
+        delete cdpPending[msg.id];
+      }
+    };
+  } catch (err){
+    setConnStatus('unavailable', 'blocked by browser — copy mode');
+  }
+}
+
+document.getElementById('reconnectBtn').addEventListener('click', tryLiveConnect);
+
+// runs code live if connected, otherwise falls back to copying it
+function runOrCopy(code, label){
+  if (cdpConnected && cdpSocket && cdpSocket.readyState === WebSocket.OPEN){
+    const id = cdpReqId++;
+    cdpPending[id] = (msg) => {
+      if (msg.result && msg.result.exceptionDetails){
+        toast(label + ' — error, see game console');
+      } else {
+        toast(label + ' cast ✓');
+      }
+    };
+    cdpSocket.send(JSON.stringify({ id, method:'Runtime.evaluate', params:{ expression: code, userGesture: true } }));
+  } else {
+    copyText(code, label);
+  }
+}
+
+// ---------- quick cheats ----------
+const IIFE = (body)=> '(function () {\n' + body + '\n})();';
+
+const SPELL_GROUPS = [
+  { label: 'Party', spells: [
+    { name:'God Mode', effect:'Party ignores incoming damage', code: IIFE(
+`    Game_Actor.prototype.gainHp = function(value) {
+        if (value < 0) value = 0;
+        this._result.hpDamage = -value;
+        this._result.hpAffected = true;
+        this.setHp(this.hp + value);
+    };`) },
+    { name:'Full Heal', effect:'Recover HP/MP/TP, clear states', code: IIFE(
+`    $gameParty.members().forEach(a => a.recoverAll());`) },
+    { name:'Max SP', effect:'All 5 characters → 99 skill points', code: IIFE(
+`    for (let i = 1; i <= 5; i++) $gameSystem.sp['chara' + i + 'SP'] = 99;`) },
+    { name:'Level 99', effect:'Every party member to level 99', code: IIFE(
+`    $gameParty.members().forEach(a => a.changeLevel(99, false));`) },
+    { name:'ATK +999', effect:'Boost attack for whole party', code: IIFE(
+`    $gameParty.members().forEach(a => a.addParam(2, 999));`) },
+    { name:'Gold +99999', effect:'Add gold to the party', code: IIFE(
+`    $gameParty.gainGold(99999);`) },
+  ]},
+  { label: 'World', spells: [
+    { name:'Instant-kill enemies', effect:'Run during battle only', code: IIFE(
+`    $gameTroop.members().forEach(e => e.addState(e.deathStateId()));`) },
+    { name:'Encounters off', effect:'No random battles while exploring', code: `$gameSystem.disableEncounter();` },
+    { name:'Encounters on', effect:'Turn random battles back on', code: `$gameSystem.enableEncounter();` },
+    { name:'Fast walk', effect:'Move speed to the game max', code: `$gamePlayer.setMoveSpeed(6);` },
+    { name:'Instant harvest', effect:'Every planted crop, every plot', code: IIFE(
+`    Object.keys($gameSystem).forEach(key => {
+        if (key.startsWith('planttime')) $gameSystem[key] = 0;
+    });`) },
+  ]},
+  { label: 'Fishing', spells: [
+    { name:'Force a bite', effect:'One-shot, while rod is cast', code: `$gameSystem.fishing.count = $gameSystem.fishing.waittime;` },
+    { name:'Auto-bite: on', effect:'Every cast bites instantly', code: IIFE(
+`    window._instantFishInterval = setInterval(() => {
+        const f = $gameSystem.fishing;
+        if (f && f.waittime > 0 && f.count < f.waittime) f.count = f.waittime;
+    }, 100);`) },
+    { name:'Auto-bite: off', effect:'Stop the interval above', code: `clearInterval(window._instantFishInterval);` },
+    { name:'Win tournament', effect:'Instant 1st place result', code: IIFE(
+`    $gameSystem.fishing.TnmtRed.Point = 9999;
+    $gameSystem.fishing.TnmtTime = 0;`) },
+  ]},
+  { label: 'Sauna', spells: [
+    { name:'Win battle royale', effect:'Drops all 3 rivals at once', code: `$gameMap.SL_SaunaHPgain(-9999, "enemy");`, danger:true },
+    { name:'Top off own HP', effect:'Mid-fight safety net', code: `$gameSystem.saunaChara[1].hp = $gameSystem.saunaChara[1].maxhp;` },
+    { name:'Sauna Points +9999', effect:'Persistent spendable currency', code: `$gameMap.SL_SaunaMenuPointGain(9999);` },
+  ]},
+];
+
+function renderSpellbook(){
+  const root = document.getElementById('spellbook');
+  root.innerHTML = '';
+  SPELL_GROUPS.forEach(group=>{
+    const label = document.createElement('div');
+    label.className = 'spell-group-label';
+    label.textContent = group.label;
+    root.appendChild(label);
+    group.spells.forEach(spell=>{
+      const row = document.createElement('div');
+      row.className = 'spell';
+      row.innerHTML = `
+        <div>
+          <div class="label">${spell.name}</div>
+          <div class="effect">${spell.effect}</div>
+        </div>
+        <button class="cast-btn${spell.danger ? ' danger' : ''}">Cast</button>
+      `;
+      row.querySelector('button').addEventListener('click', ()=> runOrCopy(spell.code, spell.name));
+      root.appendChild(row);
+    });
+  });
+}
+
+// ---------- storage tools ----------
+const CATEGORY = {
+  185:1,186:1,187:1,192:1,193:1,197:1,198:1,202:1,203:1,206:1,207:1,208:1,209:1,212:1,213:1,215:1,
+  221:1,222:1,228:1,229:1,230:1,234:1,235:1,236:1,238:1,239:1,241:1,248:1,249:1,250:1,
+  72:1,73:1,74:1,76:1,77:1,83:1,97:1,99:1,100:1,108:1,
+  301:2,303:2,304:2,305:2,312:2,323:2,329:2,330:2,338:2,339:2,340:2,347:2,261:2,262:2,280:2,294:2,
+  356:3,359:3,360:3,370:3,371:3,372:3,374:3,378:3,384:3,397:3,399:3,401:3,406:3,
+  413:3,414:3,417:3,418:3,437:3,457:3,458:3,460:3,463:3,464:3,466:3,468:3,470:3,
+  51:3,52:3,54:3,55:3,56:3,60:3,314:3,316:3,318:3,319:3,320:3,
+  21:4,131:4,132:4,134:4,137:4,139:4,140:4,142:4,153:4,155:4,156:4,168:4,169:4,172:4,173:4,176:4,177:4,182:4,
+  119:4,120:4,121:4,126:4,127:4,128:4,388:4,389:4,391:4,392:4,7:4,16:4,29:4,482:4,
+};
+
+const TIDY_SRC = IIFE(
+`    function tidyStorage(list) {
+        const merged = {};
+        const keep = [];
+        for (const slot of list) {
+            const [id, qty, extra] = slot;
+            if (id === 0) continue;
+            const hasExtra = extra && extra.some(v => v !== 0);
+            if (hasExtra) { keep.push([id, qty, extra]); }
+            else { merged[id] = (merged[id] || 0) + qty; }
+        }
+        const mergedSlots = Object.keys(merged).map(id => [Number(id), merged[id], [0,0,0,0,0,0]]).sort((a,b)=>a[0]-b[0]);
+        const combined = [...mergedSlots, ...keep];
+        for (let i = 0; i < list.length; i++) {
+            if (i < combined.length) { list[i][0]=combined[i][0]; list[i][1]=combined[i][1]; list[i][2]=combined[i][2]; }
+            else { list[i][0]=0; list[i][1]=0; list[i][2]=[0,0,0,0,0,0]; }
+        }
+    }
+    __TARGETS__.forEach(key => { if ($gameSystem[key]) tidyStorage($gameSystem[key]); });`);
+
+const SORT_SRC = IIFE(
+`    const CATEGORY = ${JSON.stringify(CATEGORY)};
+    function categorize(id){ if (id >= 1000) return 4; return CATEGORY[id] || 4; }
+    const buckets = {1:[],2:[],3:[],4:[]};
+    const uncategorized = [];
+    const keys = ['chest1','chest2','chest3','chest4'];
+    for (const key of keys) {
+        const list = $gameSystem[key];
+        if (!list) continue;
+        for (const slot of list) {
+            const [id, qty, extra] = slot;
+            if (id === 0) continue;
+            const cat = categorize(id);
+            if (id < 1000 && !CATEGORY[id]) uncategorized.push(id);
+            const hasExtra = extra && extra.some(v => v !== 0);
+            buckets[cat].push({ id, qty, extra, hasExtra });
+        }
+    }
+    for (const cat of [1,2,3,4]) {
+        const merged = {};
+        const keep = [];
+        for (const item of buckets[cat]) {
+            if (item.hasExtra) { keep.push([item.id, item.qty, item.extra]); }
+            else { merged[item.id] = (merged[item.id] || 0) + item.qty; }
+        }
+        const mergedSlots = Object.keys(merged).map(id => [Number(id), merged[id], [0,0,0,0,0,0]]).sort((a,b)=>a[0]-b[0]);
+        buckets[cat] = [...mergedSlots, ...keep];
+    }
+    for (let c = 0; c < 4; c++) {
+        const list = $gameSystem[keys[c]];
+        const data = buckets[c+1];
+        for (let i = 0; i < list.length; i++) {
+            if (i < data.length) { list[i][0]=data[i][0]; list[i][1]=data[i][1]; list[i][2]=data[i][2]; }
+            else { list[i][0]=0; list[i][1]=0; list[i][2]=[0,0,0,0,0,0]; }
+        }
+        if (data.length > list.length) console.warn('chest' + (c+1) + ' short on slots by ' + (data.length - list.length));
+    }
+    if (uncategorized.length) console.warn('Uncategorized IDs (defaulted to chest4):', [...new Set(uncategorized)]);`);
+
+const STORAGE_TOOLS = [
+  { name:'Sort 4 chests by category', effect:'Plants → 1, Materials+Potions → 2, Monster/Fish → 3, everything else → 4', code: SORT_SRC },
+  { name:'Tidy Inventory', effect:'Merge duplicates, compact empty slots', code: TIDY_SRC.replace('__TARGETS__', "['inventory']") },
+  { name:'Tidy Handitem', effect:'Merge duplicates, compact empty slots', code: TIDY_SRC.replace('__TARGETS__', "['Handitem']") },
+  { name:'Tidy all chests (no sort)', effect:'Merge within each chest, keep placement', code: TIDY_SRC.replace('__TARGETS__', "['chest1','chest2','chest3','chest4']") },
+];
+
+function renderStorageTools(){
+  const root = document.getElementById('storageTools');
+  root.innerHTML = '';
+  STORAGE_TOOLS.forEach(tool=>{
+    const card = document.createElement('div');
+    card.className = 'storage-card';
+    card.innerHTML = `
+      <div class="label">${tool.name}</div>
+      <div class="effect">${tool.effect}</div>
+      <button class="cast-btn">Cast</button>
+    `;
+    card.querySelector('button').addEventListener('click', ()=> runOrCopy(tool.code, tool.name));
+    root.appendChild(card);
+  });
+}
+
+// ---------- item spawner ----------
+let dbFilter = 'All';
+let sectionFilter = 'All';
+let resultsView = 'rows'; // 'rows' | 'cards'
+let satchel = []; // {spawnId, en, jp, db, qty, icon}
+
+// Icon sprite sheet is 16 cols x 80 rows of 32px tiles. Given a target render
+// size, scale the whole sheet by (size/32) so the crop lands on the right tile.
+function iconStyle(iconIndex, size){
+  const idx = Number.isInteger(iconIndex) && iconIndex >= 0 ? iconIndex : 0;
+  const col = idx % 16;
+  const row = Math.floor(idx / 16);
+  return `width:${size}px;height:${size}px;background-position:-${col*size}px -${row*size}px;background-size:${16*size}px ${80*size}px;`;
+}
+
+function uniqueSections(db){
+  const set = new Set();
+  ALL.filter(e => db === 'All' || e.db === db).forEach(e => set.add(e.section));
+  return ['All', ...Array.from(set)];
+}
+
+function renderChips(){
+  const dbRoot = document.getElementById('dbChips');
+  dbRoot.innerHTML = '';
+  ['All','Items','Weapons','Armors'].forEach(db=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (dbFilter===db ? ' active' : '');
+    chip.textContent = db === 'All' ? 'All types' : db;
+    chip.addEventListener('click', ()=>{
+      dbFilter = db;
+      sectionFilter = 'All';
+      renderChips();
+      renderResults();
+    });
+    dbRoot.appendChild(chip);
+  });
+
+  const secRoot = document.getElementById('sectionChips');
+  secRoot.innerHTML = '';
+  const sections = uniqueSections(dbFilter);
+  if (sections.length > 1){
+    sections.forEach(sec=>{
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (sectionFilter===sec ? ' active' : '');
+      chip.textContent = sec === 'All' ? 'All sections' : sec.replace(/\s*\(`.*?`\)/,'');
+      chip.addEventListener('click', ()=>{ sectionFilter = sec; renderResults(); renderChips(); });
+      secRoot.appendChild(chip);
+    });
+  }
+}
+
+function currentMatches(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  return ALL.filter(e=>{
+    if (dbFilter !== 'All' && e.db !== dbFilter) return false;
+    if (sectionFilter !== 'All' && e.section !== sectionFilter) return false;
+    if (!q) return true;
+    return e.en.toLowerCase().includes(q) || e.jp.includes(q);
+  });
+}
+
+function renderResults(){
+  const root = document.getElementById('results');
+  const matches = currentMatches().slice(0, 150);
+  document.getElementById('resultCount').textContent = matches.length + (matches.length===150?'+':'') + ' shown';
+  root.className = 'results' + (resultsView === 'cards' ? ' cards' : '');
+  root.innerHTML = '';
+  if (matches.length === 0){
+    root.innerHTML = '<div class="empty-note">Nothing matches that search</div>';
+    return;
+  }
+  if (resultsView === 'cards'){
+    matches.forEach(e=>{
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `
+        <button class="add-btn" title="Add to satchel">+</button>
+        <span class="icon-swatch" style="${iconStyle(e.icon, 44)}"></span>
+        <div class="en">${e.en}</div>
+        <span class="tag">${e.db} #${e.id}</span>
+      `;
+      card.querySelector('.add-btn').addEventListener('click', ()=> addToSatchel(e));
+      root.appendChild(card);
+    });
+  } else {
+    matches.forEach(e=>{
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      row.innerHTML = `
+        <span class="icon-swatch" style="${iconStyle(e.icon, 26)}"></span>
+        <div class="names">
+          <div class="en">${e.en}</div>
+          <div class="jp">${e.jp}</div>
+        </div>
+        <span class="tag">${e.db} #${e.id}</span>
+        <button class="add-btn" title="Add to satchel">+</button>
+      `;
+      row.querySelector('.add-btn').addEventListener('click', ()=> addToSatchel(e));
+      root.appendChild(row);
+    });
+  }
+}
+
+function addToSatchel(e){
+  const sid = spawnId(e);
+  const existing = satchel.find(s => s.spawnId === sid);
+  if (existing){ existing.qty += 1; }
+  else { satchel.push({ spawnId: sid, en: e.en, jp: e.jp, db: e.db, qty: 1, icon: e.icon }); }
+  renderSatchel();
+}
+
+function renderSatchel(){
+  const body = document.getElementById('satchelBody');
+  const castBtn = document.getElementById('castSatchel');
+  document.getElementById('satchelCount').textContent = satchel.length ? satchel.length + ' item' + (satchel.length>1?'s':'') : '';
+  if (satchel.length === 0){
+    body.innerHTML = '<div class="satchel-empty">Empty — search above and click + to add something</div>';
+    castBtn.disabled = true;
+    return;
+  }
+  castBtn.disabled = false;
+  const list = document.createElement('div');
+  list.className = 'satchel-list';
+  satchel.forEach((s, i)=>{
+    const row = document.createElement('div');
+    row.className = 'satchel-row';
+    row.innerHTML = `
+      <span class="icon-swatch" style="${iconStyle(s.icon, 26)}"></span>
+      <div>
+        <div class="en">${s.en}</div>
+        <div class="id">${s.db} · spawn id ${s.spawnId}</div>
+      </div>
+      <input type="number" class="qty-input" min="1" value="${s.qty}">
+      <button class="remove-btn" title="Remove">×</button>
+    `;
+    row.querySelector('.qty-input').addEventListener('input', (ev)=>{
+      const v = parseInt(ev.target.value, 10);
+      satchel[i].qty = isNaN(v) || v < 1 ? 1 : v;
+    });
+    row.querySelector('.remove-btn').addEventListener('click', ()=>{
+      satchel.splice(i,1);
+      renderSatchel();
+    });
+    list.appendChild(row);
+  });
+  body.innerHTML = '';
+  body.appendChild(list);
+}
+
+document.getElementById('clearSatchel').addEventListener('click', ()=>{
+  satchel = [];
+  renderSatchel();
+});
+
+document.getElementById('castSatchel').addEventListener('click', ()=>{
+  const target = document.getElementById('targetList').value;
+  const lines = satchel.map(s => `addItem(${target}, ${s.spawnId}, ${s.qty}); // ${s.en}`).join('\n');
+  const script = IIFE(
+`    function addItem(list, itemId, qty) {
+        const empty = list.find(s => s[0] === 0);
+        if (empty) { empty[0] = itemId; empty[1] = qty; }
+    }
+${lines.split('\n').map(l=>'    '+l).join('\n')}`);
+  runOrCopy(script, satchel.length + '-item script');
+});
+
+document.getElementById('search').addEventListener('input', renderResults);
+
+document.querySelectorAll('.view-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    if (resultsView === btn.dataset.view) return;
+    resultsView = btn.dataset.view;
+    document.querySelectorAll('.view-btn').forEach(b=>{
+      const isActive = b === btn;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+    renderResults();
+  });
+});
+
+// ---------- boot ----------
+renderSpellbook();
+renderStorageTools();
+renderChips();
+renderResults();
+renderSatchel();
+tryLiveConnect();
+</script>
+</body>
+</html>

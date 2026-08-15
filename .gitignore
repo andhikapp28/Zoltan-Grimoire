@@ -1,0 +1,8 @@
+# Personal save data pulled in while reverse-engineering the format —
+# not meant to be published (it's an actual playthrough's save contents).
+data.json
+file1.rmmzsave
+
+# OS cruft
+.DS_Store
+Thumbs.db
